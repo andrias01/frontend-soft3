@@ -46,7 +46,7 @@ Thumbs.db
 # Environment Secrets
 .env.development
 .env.production
-src/app/core/config/env.config.ts
+
 
 recovery_backup_invoice/
 .pnpm-store/
