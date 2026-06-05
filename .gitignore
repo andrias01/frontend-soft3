@@ -47,6 +47,6 @@ Thumbs.db
 .env.development
 .env.production
 src/app/core/config/env.config.ts
-scripts/generate-env.js
+
 recovery_backup_invoice/
 .pnpm-store/
