@@ -29,7 +29,7 @@ type LocationCatalogResponse =
 @Injectable({ providedIn: 'root' })
 export class UserRegisterService {
   private readonly http = inject(HttpClient);
-  private readonly apiRoot = '';
+  private readonly apiRoot = ENV.apiUrl.replace(/\/api\/v1\/?$/, '');
 
   async loadCatalogs(): Promise<RegisterCatalogs> {
     const [docTypesResult, depsResult, locationsResult] = await Promise.allSettled([

@@ -1,13 +1,16 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LocationPatchRequest, LocationRequest, LocationResponse } from '../models/location.model';
+import { ENV } from '@config/env.config';
 
 @Injectable({ providedIn: 'root' })
 export class LocationService {
-  private readonly baseUrl = '/inventory/api/v1/location';
+  private readonly http = inject(HttpClient);
+  private readonly apiRoot = ENV.apiUrl.replace(/\/api\/v1\/?$/, '');
+  private readonly baseUrl = `${this.apiRoot}/inventory/api/v1/location`;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor() {}
 
   list(): Observable<LocationResponse[]> {
     return this.http.get<LocationResponse[]>(this.baseUrl);

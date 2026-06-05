@@ -19,8 +19,8 @@ export interface ProductPage {
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
-
-  private url = 'http://localhost:8080/inventory/product';
+  private readonly apiRoot = ENV.apiUrl.replace(/\/api\/v1\/?$/, '');
+  private readonly url = `${this.apiRoot}/inventory/api/v1/product`;
 
   constructor(private http: HttpClient) {}
 

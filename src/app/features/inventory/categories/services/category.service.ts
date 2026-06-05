@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { ENV } from '@config/env.config';
 import {
   CategoryResponse,
   CategoryStatus,
@@ -11,7 +12,8 @@ import {
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/inventory/api/v1/categories';
+  private readonly apiRoot = ENV.apiUrl.replace(/\/api\/v1\/?$/, '');
+  private readonly baseUrl = `${this.apiRoot}/inventory/api/v1/categories`;
 
   getAll(): Observable<CategoryResponse[]> {
     return this.http.get<CategoryResponse[]>(this.baseUrl);

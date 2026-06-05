@@ -7,7 +7,8 @@ import { ENV } from '@config/env.config';
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080/inventory/product';
+  private readonly apiRoot = ENV.apiUrl.replace(/\/api\/v1\/?$/, '');
+  private readonly baseUrl = `${this.apiRoot}/inventory/api/v1/product`;
 
   findAll(page: number = 0, size: number = 10, name?: string): Observable<any> {
     let params = new HttpParams()

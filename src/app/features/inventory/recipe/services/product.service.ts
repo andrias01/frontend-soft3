@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { ENV } from '@config/env.config';
 
 export interface RecipeProductOption {
   id: string;
@@ -14,7 +15,8 @@ interface ProductPage {
 
 @Injectable({ providedIn: 'root' })
 export class RecipeProductService {
-  private readonly url = 'http://localhost:8080/inventory/product';
+  private readonly apiRoot = ENV.apiUrl.replace(/\/api\/v1\/?$/, '');
+  private readonly url = `${this.apiRoot}/inventory/api/v1/product`;
 
   constructor(private http: HttpClient) {}
 

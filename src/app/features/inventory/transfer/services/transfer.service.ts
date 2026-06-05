@@ -12,7 +12,8 @@ import {
 @Injectable({ providedIn: 'root' })
 export class TransferService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080/inventory/api/v1/transfers';
+  private readonly apiRoot = ENV.apiUrl.replace(/\/api\/v1\/?$/, '');
+  private readonly baseUrl = `${this.apiRoot}/inventory/api/v1/transfers`;
 
   getAll(): Observable<TransferResponse[]> {
     return this.http.get<TransferResponse[]>(this.baseUrl);
