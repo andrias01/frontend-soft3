@@ -1,0 +1,186 @@
+<section class="provider-form-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Comercial · Proveedores</p>
+      <h1>{{ isEditing() ? 'Editar proveedor' : 'Nuevo proveedor' }}</h1>
+      <p>
+        {{
+          isEditing()
+            ? 'Actualiza la información del proveedor. El correo no se puede modificar.'
+            : 'Completa los datos para registrar un nuevo proveedor.'
+        }}
+      </p>
+    </div>
+    <a routerLink="/commercial/provider" class="secondary-button">Volver al listado</a>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <span class="spinner" aria-hidden="true"></span>
+      <p>Cargando proveedor...</p>
+    </div>
+  }
+
+  @if (!loading()) {
+    @if (generalError()) {
+      <div class="alert error" role="alert">{{ generalError() }}</div>
+    }
+
+    @if (successMessage()) {
+      <div class="alert success" role="status">{{ successMessage() }}</div>
+    }
+
+    <form class="form-card" [formGroup]="form" (ngSubmit)="save()">
+      <input type="hidden" formControlName="branchId" />
+
+      <section class="form-section">
+        <h2>Datos del negocio</h2>
+        <div class="form-grid">
+          <label class="full-width">
+            Razón social
+            <input type="text" formControlName="businessName" maxlength="150" />
+            @if (showFieldError('businessName')) {
+              <small>{{ fieldError('businessName') }}</small>
+            }
+          </label>
+
+          <label>
+            Tipo de documento
+            <select formControlName="documentTypeId">
+              <option [ngValue]="0" disabled>Selecciona</option>
+              @if (hasUnknownDocumentType()) {
+                <option [ngValue]="form.controls.documentTypeId.value">Tipo registrado</option>
+              }
+              @for (type of documentTypes; track type.id) {
+                <option [ngValue]="type.id">{{ type.label }}</option>
+              }
+            </select>
+            @if (showFieldError('documentTypeId')) {
+              <small>{{ fieldError('documentTypeId') }}</small>
+            }
+          </label>
+
+          <label>
+            Número de documento
+            <input
+              type="text"
+              formControlName="documentNumber"
+              inputmode="numeric"
+              maxlength="20"
+              (keypress)="onlyDigits($event)" />
+            @if (showFieldError('documentNumber')) {
+              <small>{{ fieldError('documentNumber') }}</small>
+            }
+          </label>
+
+          <label class="full-width">
+            Régimen tributario
+            <select formControlName="taxRegimeId">
+              <option [ngValue]="0" disabled>Selecciona</option>
+              @if (hasUnknownTaxRegime()) {
+                <option [ngValue]="form.controls.taxRegimeId.value">Régimen registrado</option>
+              }
+              @for (regime of taxRegimes; track regime.id) {
+                <option [ngValue]="regime.id">{{ regime.label }}</option>
+              }
+            </select>
+            @if (showFieldError('taxRegimeId')) {
+              <small>{{ fieldError('taxRegimeId') }}</small>
+            }
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Responsable y contacto</h2>
+        <div class="form-grid">
+          <label>
+            Nombre
+            <input type="text" formControlName="responsibleFirstName" maxlength="100" />
+            @if (showFieldError('responsibleFirstName')) {
+              <small>{{ fieldError('responsibleFirstName') }}</small>
+            }
+          </label>
+
+          <label>
+            Apellido
+            <input type="text" formControlName="responsibleLastName" maxlength="100" />
+            @if (showFieldError('responsibleLastName')) {
+              <small>{{ fieldError('responsibleLastName') }}</small>
+            }
+          </label>
+
+          <label>
+            Teléfono
+            <input
+              type="tel"
+              formControlName="phone"
+              inputmode="numeric"
+              maxlength="10"
+              (keypress)="onlyDigits($event)" />
+            @if (showFieldError('phone')) {
+              <small>{{ fieldError('phone') }}</small>
+            }
+          </label>
+
+          <label>
+            Correo electrónico
+            <input type="email" formControlName="email" />
+            @if (isEditing()) {
+              <span class="field-hint">El correo no se puede modificar.</span>
+            }
+            @if (showFieldError('email')) {
+              <small>{{ fieldError('email') }}</small>
+            }
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2>Ubicación</h2>
+        <div class="form-grid">
+          <label>
+            Departamento
+            <select formControlName="departmentId">
+              <option [ngValue]="0" disabled>Selecciona</option>
+              @for (dept of departments; track dept.id) {
+                <option [ngValue]="dept.id">{{ dept.label }}</option>
+              }
+            </select>
+            @if (showFieldError('departmentId')) {
+              <small>{{ fieldError('departmentId') }}</small>
+            }
+          </label>
+
+          <label>
+            Ciudad
+            <select formControlName="cityId">
+              <option [ngValue]="0" disabled>Selecciona</option>
+              @for (city of availableCities(); track city.id) {
+                <option [ngValue]="city.id">{{ city.label }}</option>
+              }
+            </select>
+            @if (showFieldError('cityId')) {
+              <small>{{ fieldError('cityId') }}</small>
+            }
+          </label>
+
+          <label class="full-width">
+            Dirección
+            <input type="text" formControlName="address" maxlength="200" />
+            @if (showFieldError('address')) {
+              <small>{{ fieldError('address') }}</small>
+            }
+          </label>
+        </div>
+      </section>
+
+      <footer class="form-actions">
+        <a routerLink="/commercial/provider" class="secondary-button">Cancelar</a>
+        <button type="submit" class="primary-button" [disabled]="submitting()">
+          {{ submitting() ? 'Enviando...' : isEditing() ? 'Guardar cambios' : 'Crear proveedor' }}
+        </button>
+      </footer>
+    </form>
+  }
+</section>

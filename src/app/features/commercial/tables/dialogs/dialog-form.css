@@ -1,0 +1,147 @@
+.backdrop {
+  align-items: center;
+  animation: dialogFade 160ms ease;
+  background: rgba(15, 23, 42, 0.42);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 40;
+}
+
+.dialog {
+  animation: dialogLift 180ms ease;
+  background: #FFF8F2;
+  border-radius: 8px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+  display: grid;
+  gap: 18px;
+  max-width: 640px;
+  padding: 22px;
+  width: 100%;
+}
+
+header,
+footer {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+header span {
+  color: #FF6B35;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+h2 {
+  color: #222222;
+  font-size: 22px;
+  margin: 4px 0 0;
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+label {
+  color: #1B1B1B;
+  display: grid;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 8px;
+}
+
+input,
+select,
+textarea {
+  background: #fff;
+  border: 1px solid #D9D4CD;
+  border-radius: 8px;
+  color: #222222;
+  font: inherit;
+  min-height: 42px;
+  outline: none;
+  padding: 0 12px;
+}
+
+textarea {
+  padding-top: 10px;
+  resize: vertical;
+}
+
+small {
+  color: #EF4444;
+  font-weight: 700;
+}
+
+.checks {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.checks label {
+  align-items: center;
+  background: #FFF8F2;
+  border: 1px solid rgba(27, 27, 27, 0.08);
+  border-radius: 8px;
+  display: flex;
+  padding: 12px;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 800;
+  min-height: 40px;
+  padding: 0 16px;
+}
+
+.icon-btn {
+  background: rgba(46, 196, 182, 0.12);
+  color: #2EC4B6;
+  font-size: 20px;
+  height: 36px;
+  padding: 0;
+  width: 36px;
+}
+
+.secondary {
+  background: #fff;
+  color: #1B1B1B;
+}
+
+.primary {
+  background: #FF6B35;
+  color: #fff;
+}
+
+.primary:disabled {
+  background: #F9BA9A;
+  cursor: not-allowed;
+}
+
+@keyframes dialogFade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes dialogLift {
+  from {
+    transform: translateY(8px);
+  }
+}
+
+@media (max-width: 680px) {
+  .grid,
+  .checks {
+    grid-template-columns: 1fr;
+  }
+}

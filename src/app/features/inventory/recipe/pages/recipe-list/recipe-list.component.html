@@ -1,0 +1,135 @@
+<div class="recipe-page">
+  <header class="page-header">
+    <div class="header-text">
+      <h1 class="page-title">Gestión de Recetas</h1>
+      <p class="page-subtitle">Crea, edita e inactiva las recetas del menú.</p>
+    </div>
+    <button class="btn-primary" (click)="goToCreate()">
+      <span class="btn-icon">+</span> Nueva Receta
+    </button>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">{{ errorMessage() }}</div>
+  }
+
+  <section class="card filters-bar">
+    <div class="filter-field">
+      <label>Buscar</label>
+      <input
+        type="text"
+        placeholder="Nombre de receta..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="onSearchChange($event)"
+        class="input-search"
+      />
+    </div>
+    <div class="filter-field">
+      <label>Estado</label>
+      <app-custom-select
+        [options]="statusOptions"
+        [value]="statusFilter()"
+        (valueChange)="onStatusChange($event)"
+        placeholder="Todos"
+      />
+    </div>
+    <div class="filter-field">
+      <label>Visibilidad en menú</label>
+      <app-custom-select
+        [options]="visibilityOptions"
+        [value]="visibilityFilter()"
+        (valueChange)="onVisibilityChange($event)"
+        placeholder="Todas"
+      />
+    </div>
+    <button class="btn-ghost" (click)="clearFilters()">Limpiar filtros</button>
+  </section>
+
+  <section class="card table-section">
+    @if (loading()) {
+      <div class="state-center">
+        <div class="spinner"></div>
+        <p>Cargando recetas...</p>
+      </div>
+    } @else {
+      <div class="table-container" [class.is-filtering]="filtering()">
+
+        @if (filtering()) {
+          <div class="filter-overlay">
+            <div class="spinner spinner-sm"></div>
+            <span>Filtrando...</span>
+          </div>
+        }
+
+        @if (filteredRecipes().length === 0) {
+          <div class="state-center empty-state">
+            <div class="empty-icon">🍽️</div>
+            <p class="empty-title">Sin recetas</p>
+            <p class="empty-sub">No hay recetas que coincidan con los filtros aplicados.</p>
+            <button class="btn-primary" (click)="goToCreate()">Crear primera receta</button>
+          </div>
+        } @else {
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Costo base</th>
+                  <th>Margen (%)</th>
+                  <th>Precio venta</th>
+                  <th>Estado</th>
+                  <th>Menú</th>
+                  <th>Actualizado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (recipe of filteredRecipes(); track recipe.id) {
+                  <tr [class.row-inactive]="!recipe.active">
+                    <td class="td-name">{{ recipe.name }}</td>
+                    <td>{{ formatCurrency(recipe.baseCost) }}</td>
+                    <td class="td-center">{{ recipe.profitMargin }}%</td>
+                    <td class="td-price">{{ formatCurrency(recipe.sellingPrice) }}</td>
+                    <td>
+                      <span class="badge" [class.badge-active]="recipe.active" [class.badge-inactive]="!recipe.active">
+                        {{ recipe.active ? 'Activa' : 'Inactiva' }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge" [class.badge-visible]="recipe.visibleInMenu" [class.badge-hidden]="!recipe.visibleInMenu">
+                        {{ recipe.visibleInMenu ? 'Visible' : 'Oculta' }}
+                      </span>
+                    </td>
+                    <td class="td-date">{{ recipe.updatedAt | date:'dd/MM/yyyy' }}</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="action-btn" title="Editar" (click)="goToEdit(recipe)" [disabled]="!recipe.active">
+                          ✏️
+                        </button>
+                        @if (recipe.active) {
+                          <button class="action-btn" title="Inactivar" (click)="openDeactivate(recipe)">
+                            🚫
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span class="results-count">{{ filteredRecipes().length }} receta(s) encontrada(s)</span>
+          </div>
+        }
+      </div>
+    }
+  </section>
+</div>
+
+<app-recipe-deactivate-modal
+  [open]="deactivateModalOpen()"
+  [recipe]="selectedRecipe()"
+  (onOpenChange)="deactivateModalOpen.set($event)"
+  (onConfirm)="confirmDeactivate()"
+/>

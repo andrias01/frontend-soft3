@@ -1,0 +1,170 @@
+<div class="location-page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Sedes</h1>
+      <p class="page-subtitle">Gestiona las sedes disponibles para la operación de inventario.</p>
+    </div>
+
+    <button type="button" class="btn-primary create-location-btn" (click)="goToCreate()">
+      <span class="btn-icon">+</span>
+      <span>Nueva sede</span>
+    </button>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">{{ errorMessage() }}</div>
+  }
+
+  @if (infoMessage()) {
+    <div class="alert alert-info">{{ infoMessage() }}</div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert alert-success">{{ successMessage() }}</div>
+  }
+
+  <section class="card filters-bar">
+    <div class="filters-left">
+      <div class="filter-field">
+        <label>Buscar</label>
+        <input
+          type="text"
+          placeholder="Nombre, ciudad, email..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label>Estado</label>
+        <select [ngModel]="statusFilter()" (ngModelChange)="onStatusChange($event)">
+          <option value="ALL">Todos</option>
+          <option value="ACTIVE">Activas</option>
+          <option value="INACTIVE">Inactivas</option>
+        </select>
+      </div>
+
+      <button type="button" class="btn-ghost" (click)="clearFilters()">Limpiar filtros</button>
+    </div>
+
+    <div class="pagination-control">
+      <label>Mostrar</label>
+      <select [ngModel]="pageSize()" (ngModelChange)="onPageSizeChange($event)">
+        @for (size of pageSizeOptions; track size) {
+          <option [value]="size">{{ size }}</option>
+        }
+      </select>
+      <span>sedes</span>
+    </div>
+  </section>
+
+  <section class="card table-section">
+    @if (loading()) {
+      <div class="state-center">
+        <div class="spinner"></div>
+        <p>Cargando sedes...</p>
+      </div>
+    } @else if (filteredLocations().length === 0) {
+      <div class="state-center empty-state">
+        <p class="empty-title">Sin sedes</p>
+        <p class="empty-sub">No hay sedes que coincidan con los filtros aplicados.</p>
+      </div>
+    } @else {
+      <div class="table-container" [class.is-filtering]="filtering()">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Ciudad</th>
+              <th>Dirección</th>
+              <th>Email</th>
+              <th>Teléfono</th>
+              <th>Horario</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (location of paginatedLocations(); track location.id) {
+              <tr>
+                <td>{{ location.name }}</td>
+                <td>{{ location.city }}</td>
+                <td>{{ location.address }}</td>
+                <td>{{ location.email }}</td>
+                <td>{{ location.phoneNumber }}</td>
+                <td>{{ location.startTime }} - {{ location.endTime }}</td>
+                <td>
+                  <span
+                    class="badge"
+                    [class.badge-active]="location.active"
+                    [class.badge-inactive]="!location.active"
+                  >
+                    {{ location.active ? 'Activa' : 'Inactiva' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <button
+                      class="action-pill action-edit"
+                      type="button"
+                      (click)="goToEdit(location)"
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      class="action-pill"
+                      type="button"
+                      [class.action-disable]="location.active"
+                      [class.action-enable]="!location.active"
+                      [disabled]="isToggling(location.id)"
+                      (click)="toggleStatus(location)"
+                    >
+                      {{
+                        isToggling(location.id)
+                          ? 'Procesando...'
+                          : location.active
+                            ? 'Inactivar'
+                            : 'Activar'
+                      }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <div>
+          Mostrando {{ visibleFrom() }} - {{ visibleTo() }} de
+          {{ filteredLocations().length }} sede(s)
+        </div>
+
+        <div class="pagination">
+          <button
+            class="action-btn"
+            type="button"
+            (click)="goToPreviousPage()"
+            [disabled]="currentPage() === 1"
+          >
+            Anterior
+          </button>
+
+          <span>Página {{ currentPage() }} de {{ totalPages() }}</span>
+
+          <button
+            class="action-btn"
+            type="button"
+            (click)="goToNextPage()"
+            [disabled]="currentPage() === totalPages()"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
+    }
+  </section>
+</div>

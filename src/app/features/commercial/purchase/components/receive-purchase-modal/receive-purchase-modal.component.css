@@ -1,0 +1,33 @@
+.modal-overlay {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff8f2;
+  border-radius: 12px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 20px;
+  width: min(820px, 100%);
+}
+
+.modal-header h2 { margin: 0; }
+.modal-header p { color: #6b7280; margin-top: 6px; }
+.grid-2 { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.field { display: grid; gap: 8px; }
+input { border: 1px solid #d9d4cd; border-radius: 8px; min-height: 40px; padding: 0 10px; }
+.table { border-collapse: collapse; width: 100%; }
+.table th, .table td { border-bottom: 1px solid #eadfd4; padding: 8px; text-align: left; }
+.alert-info { background: #dbeafe; border-radius: 8px; color: #1e3a8a; padding: 10px; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+button { border: 0; border-radius: 8px; cursor: pointer; font-weight: 700; min-height: 36px; padding: 0 14px; }
+.btn-primary { background: #ff6b35; color: #fff; }
+.btn-secondary { background: #fff; border: 1px solid #e1d7cc; }

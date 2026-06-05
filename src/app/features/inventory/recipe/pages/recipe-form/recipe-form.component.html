@@ -1,0 +1,278 @@
+<div class="recipe-form-page">
+  <header class="page-header">
+    <div class="header-text">
+      <h1 class="page-title">{{ isEdit ? 'Editar Receta' : 'Nueva Receta' }}</h1>
+      <p class="page-subtitle">{{ isEdit ? 'Modifica los datos de la receta.' : 'Completa los campos para registrar una nueva receta.' }}</p>
+    </div>
+    <button class="btn-ghost" (click)="cancel()">← Volver</button>
+  </header>
+
+  @if (loading()) {
+    <div class="state-center">
+      <div class="spinner"></div>
+      <p>Cargando receta...</p>
+    </div>
+  } @else {
+
+    @if (errorMessage()) {
+      <div class="alert alert-error">{{ errorMessage() }}</div>
+    }
+
+    <div class="form-layout">
+
+      <!-- LEFT COLUMN: Información general -->
+      <div class="form-col">
+
+        <section class="card">
+          <h3 class="section-title">Información general</h3>
+
+          <div class="field">
+            <label class="field-label" for="recipeName">Nombre <span class="required">*</span></label>
+            <input
+              id="recipeName"
+              type="text"
+              [(ngModel)]="name"
+              [class.input-error]="nameError"
+              placeholder="Ej: Pizza Margarita"
+              maxlength="150"
+              autocomplete="off"
+            />
+            @if (nameError) { <span class="error-msg">{{ nameError }}</span> }
+            <span class="hint">Entre 3 y 150 caracteres. Solo letras, números, tildes y espacios.</span>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="categoryId">Categoría <span class="required">*</span></label>
+            @if (categoriesLoadError()) {
+              <div class="alert-warning">No fue posible cargar las categorías. Verifica que el servicio esté disponible.</div>
+            }
+            <app-custom-select
+              [options]="categoryOptions"
+              [value]="categoryId"
+              (valueChange)="categoryId = $event; categoryError = ''"
+              placeholder="— Seleccionar categoría —"
+              [loading]="categoriesLoading()"
+              [disabled]="categoriesLoadError()"
+              [hasError]="!!categoryError"
+              emptyText="No hay categorías activas disponibles"
+            />
+            @if (categoryError) { <span class="error-msg">{{ categoryError }}</span> }
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="field-label" for="profitMargin">Margen de ganancia (%) <span class="required">*</span></label>
+              <input
+                id="profitMargin"
+                type="number"
+                [(ngModel)]="profitMargin"
+                (ngModelChange)="onProfitMarginChange()"
+                [class.input-error]="profitMarginError"
+                placeholder="0 - 100"
+                min="0"
+                max="100"
+              />
+              @if (profitMarginError) { <span class="error-msg">{{ profitMarginError }}</span> }
+            </div>
+          </div>
+
+          <div class="field-row toggle-row">
+            <div class="toggle-field">
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="visibleInMenu" class="toggle-input" />
+                <span class="toggle-slider"></span>
+                Visible en menú
+              </label>
+              <span class="hint">Indica si la receta aparece en el catálogo de ventas.</span>
+            </div>
+            <div class="toggle-field">
+              <label class="toggle-label">
+                <input type="checkbox" [(ngModel)]="active" class="toggle-input" />
+                <span class="toggle-slider"></span>
+                Activa
+              </label>
+              <span class="hint">Las recetas inactivas no pueden usarse en ventas.</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- COSTOS CALCULADOS -->
+        <section class="card cost-summary">
+          <h3 class="section-title">Resumen de costos</h3>
+          <div class="cost-grid">
+            <div class="cost-item">
+              <span class="cost-label">Costo base</span>
+              <span class="cost-value">{{ formatCurrency(baseCost()) }}</span>
+            </div>
+            <div class="cost-item">
+              <span class="cost-label">Margen aplicado</span>
+              <span class="cost-value accent">{{ profitMargin ?? 0 }}%</span>
+            </div>
+            <div class="cost-item highlight">
+              <span class="cost-label">Precio de venta</span>
+              <span class="cost-value primary">{{ formatCurrency(sellingPrice()) }}</span>
+            </div>
+          </div>
+          <p class="cost-hint">El costo base y el precio de venta se calculan automáticamente según los productos y sub-recetas agregados.</p>
+        </section>
+      </div>
+
+      <!-- RIGHT COLUMN: Productos y Sub-recetas -->
+      <div class="form-col">
+
+        <!-- PRODUCTOS -->
+        <section class="card">
+          <h3 class="section-title">Productos <span class="required">*</span></h3>
+          <p class="section-subtitle">Selecciona al menos un producto e indica su cantidad y precio.</p>
+
+          @if (productsLoadError()) {
+            <div class="alert-warning">
+              No fue posible cargar el catálogo de productos en este momento. Verifica que el servicio esté disponible.
+            </div>
+          }
+
+          <div class="add-row">
+            <app-custom-select
+              [options]="productOptions"
+              [value]="selectedProductId"
+              (valueChange)="selectedProductId = $event"
+              placeholder="— Seleccionar producto —"
+              [loading]="productsLoading()"
+              [disabled]="productsLoadError()"
+              emptyText="No hay productos registrados en esta ubicación"
+            />
+            <button class="btn-accent" (click)="addProduct()" [disabled]="!selectedProductId || productsLoadError()">
+              + Agregar
+            </button>
+          </div>
+
+          @if (productListError) {
+            <span class="error-msg">{{ productListError }}</span>
+          }
+
+          @if (productRows().length > 0) {
+            <div class="items-table-wrap">
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Cant.</th>
+                    <th>Precio unit.</th>
+                    <th>Subtotal</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of productRows(); track row.productId; let i = $index) {
+                    <tr>
+                      <td class="td-name">{{ row.name }}</td>
+                      <td>
+                        <input
+                          type="number"
+                          min="1"
+                          [(ngModel)]="row.quantity"
+                          (ngModelChange)="recalculate()"
+                          class="input-sm"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.001"
+                          [(ngModel)]="row.price"
+                          (ngModelChange)="recalculate()"
+                          class="input-sm"
+                        />
+                      </td>
+                      <td class="td-subtotal">{{ formatCurrency(row.price * row.quantity) }}</td>
+                      <td>
+                        <button class="remove-btn" (click)="removeProduct(i)" title="Eliminar">✕</button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="empty-list">Sin productos agregados.</div>
+          }
+        </section>
+
+        <!-- SUB-RECETAS -->
+        <section class="card">
+          <h3 class="section-title">Sub-recetas <span class="optional">(opcional)</span></h3>
+          <p class="section-subtitle">Agrega otras recetas como componente de esta.</p>
+
+          <div class="info-note">
+            <span class="info-icon">💡</span>
+            <p>
+              Al usar una receta como sub-receta, solo se toma su <strong>costo de producción</strong>,
+              no su precio de venta. El margen de ganancia lo define únicamente esta receta.
+            </p>
+          </div>
+
+          <div class="add-row">
+            <app-custom-select
+              [options]="subRecipeOptions"
+              [value]="selectedSubRecipeId"
+              (valueChange)="selectedSubRecipeId = $event"
+              placeholder="— Seleccionar sub-receta —"
+            />
+            <button class="btn-accent" (click)="addSubRecipe()" [disabled]="!selectedSubRecipeId">
+              + Agregar
+            </button>
+          </div>
+
+          @if (subRecipeRows().length > 0) {
+            <div class="items-table-wrap">
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>Sub-receta</th>
+                    <th>Cant.</th>
+                    <th>Costo base</th>
+                    <th>Subtotal</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (sub of subRecipeRows(); track sub.subRecipeId; let i = $index) {
+                    <tr>
+                      <td class="td-name">{{ sub.name }}</td>
+                      <td>
+                        <input
+                          type="number"
+                          min="1"
+                          [(ngModel)]="sub.quantity"
+                          (ngModelChange)="recalculate()"
+                          class="input-sm"
+                        />
+                      </td>
+                      <td>{{ formatCurrency(sub.baseCost) }}</td>
+                      <td class="td-subtotal">{{ formatCurrency(sub.baseCost * sub.quantity) }}</td>
+                      <td>
+                        <button class="remove-btn" (click)="removeSubRecipe(i)" title="Eliminar">✕</button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="empty-list">Sin sub-recetas agregadas.</div>
+          }
+        </section>
+      </div>
+    </div>
+
+    <!-- FOOTER ACTIONS -->
+    <div class="form-actions">
+      <button class="btn-ghost" (click)="cancel()">Cancelar</button>
+      <button class="btn-primary" (click)="save()" [disabled]="saving()">
+        @if (saving()) { Guardando... } @else { {{ isEdit ? 'Guardar cambios' : 'Crear receta' }} }
+      </button>
+    </div>
+
+  }
+</div>

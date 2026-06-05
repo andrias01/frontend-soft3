@@ -1,0 +1,188 @@
+<section class="provider-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Comercial · Facturación</p>
+      <h1>Gestión de Proveedores</h1>
+      <p>Registra, edita y administra los proveedores de tu restaurante.</p>
+    </div>
+  </header>
+
+  <section class="stats-grid" aria-label="Resumen de proveedores">
+    <article class="stat-card total">
+      <span class="stat-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="M3 9l2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg>
+      </span>
+      <div>
+        <span class="stat-label">Total proveedores</span>
+        <strong>{{ totalProviders() }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card active">
+      <span class="stat-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+      </span>
+      <div>
+        <span class="stat-label">Activos</span>
+        <strong>{{ activeProviders() }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card inactive">
+      <span class="stat-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </span>
+      <div>
+        <span class="stat-label">Inactivos</span>
+        <strong>{{ inactiveProviders() }}</strong>
+      </div>
+    </article>
+  </section>
+
+  <div class="toolbar">
+    <label class="search-box">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input
+        type="search"
+        placeholder="Buscar por razón social, NIT, contacto, correo..."
+        [value]="search()"
+        (input)="onSearch($event)" />
+    </label>
+
+    <a routerLink="/commercial/provider/create" class="primary-button">
+      <span aria-hidden="true">+</span>
+      Nuevo proveedor
+    </a>
+  </div>
+
+  <div class="filter-chips" role="group" aria-label="Filtrar por estado">
+    <button
+      type="button"
+      class="chip"
+      [class.active]="statusFilter() === 'ALL'"
+      (click)="setStatusFilter('ALL')">
+      Todos
+    </button>
+    <button
+      type="button"
+      class="chip"
+      [class.active]="statusFilter() === 'ACTIVE'"
+      (click)="setStatusFilter('ACTIVE')">
+      Activos
+    </button>
+    <button
+      type="button"
+      class="chip"
+      [class.active]="statusFilter() === 'INACTIVE'"
+      (click)="setStatusFilter('INACTIVE')">
+      Inactivos
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="inline-error" role="alert">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <span class="spinner" aria-hidden="true"></span>
+      <p>Cargando proveedores...</p>
+    </div>
+  }
+
+  @if (!loading()) {
+    @if (filteredProviders().length === 0) {
+      <section class="empty-state">
+        <h2>No hay proveedores para mostrar</h2>
+        <p>Crea un proveedor o ajusta la búsqueda y los filtros.</p>
+        <a routerLink="/commercial/provider/create" class="primary-button">Nuevo proveedor</a>
+      </section>
+    } @else {
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Razón social</th>
+              <th>Documento</th>
+              <th>Responsable</th>
+              <th>Contacto</th>
+              <th>Ubicación</th>
+              <th>Régimen</th>
+              <th>Estado</th>
+              <th class="right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (provider of paginatedProviders(); track provider.id) {
+              <tr [class.row-inactive]="statusOf(provider) === 'INACTIVE'">
+                <td class="strong">{{ provider.businessName }}</td>
+                <td>
+                  <span class="doc-pill">{{ documentTypeShortLabel(provider.documentTypeId) }}</span>
+                  <span class="mono">{{ provider.documentNumber }}</span>
+                </td>
+                <td>{{ responsibleName(provider) }}</td>
+                <td>
+                  <div class="contact-cell">
+                    <span>{{ provider.phone }}</span>
+                    <span class="email-cell">{{ provider.email }}</span>
+                  </div>
+                </td>
+                <td>{{ locationLabel(provider) }}</td>
+                <td>{{ taxRegimeLabel(provider.taxRegimeId) }}</td>
+                <td>
+                  <app-provider-status-badge [status]="statusOf(provider)" />
+                </td>
+                <td class="actions">
+                  <a
+                    [routerLink]="['/commercial/provider/edit', provider.id]"
+                    class="action-button">
+                    Editar
+                  </a>
+                  <button
+                    type="button"
+                    class="action-button"
+                    [class.danger]="statusOf(provider) === 'ACTIVE'"
+                    [disabled]="!provider.id || changingStatus() === provider.id"
+                    (click)="toggleStatus(provider)">
+                    @if (changingStatus() === provider.id) {
+                      Enviando...
+                    } @else {
+                      {{ statusOf(provider) === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
+                    }
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages() > 1) {
+        <nav class="pagination" aria-label="Paginación de proveedores">
+          <button
+            type="button"
+            class="secondary-button"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)">
+            Anterior
+          </button>
+          <span>Página {{ currentPage() }} de {{ totalPages() }}</span>
+          <button
+            type="button"
+            class="secondary-button"
+            [disabled]="currentPage() === totalPages()"
+            (click)="goToPage(currentPage() + 1)">
+            Siguiente
+          </button>
+        </nav>
+      }
+    }
+  }
+</section>
+
+@if (toast(); as currentToast) {
+  <aside class="provider-toast" [class.error]="currentToast.type === 'error'">
+    <span>{{ currentToast.message }}</span>
+    <button type="button" (click)="clearToast()" aria-label="Cerrar notificación">×</button>
+  </aside>
+}

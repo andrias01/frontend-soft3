@@ -1,0 +1,669 @@
+<div class="invoice-page">
+  <header class="page-header">
+    <div>
+      <h1>Facturación</h1>
+      <p>Selecciona una venta existente y genera la factura sin alterar la venta original.</p>
+    </div>
+    <button class="btn btn-secondary" type="button" (click)="loadSales()" [disabled]="loadingSales() || loadingInvoices()">
+      {{ loadingSales() || loadingInvoices() ? 'Actualizando...' : 'Actualizar ventas y facturas' }}
+    </button>
+  </header>
+
+  @if (successMessage()) {
+    <section class="alert success">
+      <div>
+        <strong>Factura creada exitosamente</strong>
+        <p>{{ successMessage() }}</p>
+      </div>
+      <div class="alert-tags">
+        @if (selectedInvoiceIdForActions()) {
+          <span class="chip">Invoice ID: {{ selectedInvoiceIdForActions() }}</span>
+        }
+        <span class="chip success">
+          {{ selectedInvoiceNumberForActions() || 'Consecutivo generado por backend' }}
+        </span>
+        @if (selectedInvoiceStatusForActions()) {
+          <span class="chip" [ngClass]="invoiceStatusClass(selectedInvoiceStatusForActions())">
+            {{ invoiceStatusLabel(selectedInvoiceStatusForActions()) }}
+          </span>
+        }
+      </div>
+      @if (selectedInvoiceIdForActions() && selectedInvoiceLocationIdForActions()) {
+        <div class="inline-actions">
+          <button
+            class="btn btn-secondary btn-sm"
+            type="button"
+            (click)="goToCashReceipt(selectedInvoiceIdForActions(), selectedInvoiceLocationIdForActions())">
+            Ir a Recibo de Caja
+          </button>
+        </div>
+      }
+    </section>
+  }
+
+  @if (copyFeedback()) {
+    <section class="alert info">
+      <strong>Portapapeles</strong>
+      <p>{{ copyFeedback() }}</p>
+    </section>
+  }
+
+  @if (salesError()) {
+    <section class="alert error">
+      <strong>Error cargando ventas</strong>
+      <p>{{ salesError() }}</p>
+    </section>
+  }
+
+  @if (invoicesError()) {
+    <section class="alert warn">
+      <strong>Error cargando facturas</strong>
+      <p>{{ invoicesError() }}</p>
+    </section>
+  }
+
+  @if (discountError()) {
+    <section class="alert warn">
+      <strong>Descuentos no disponibles</strong>
+      <p>{{ discountError() }}</p>
+    </section>
+  }
+
+  @if (submitErrorState(); as submitError) {
+    <section class="alert error">
+      <div>
+        <strong>Error al crear factura</strong>
+        <p>{{ submitError.message }}</p>
+      </div>
+      <div class="alert-tags">
+        @if (submitError.status) {
+          <span class="chip">HTTP {{ submitError.status }}</span>
+        }
+        @if (submitError.errorCode) {
+          <span class="chip">{{ submitError.errorCode }}</span>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="content-grid">
+    <!-- LEFT PANEL: Sales list -->
+    <article class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Ventas disponibles</h2>
+          <p>{{ saleCountLabel() }}</p>
+        </div>
+        <div class="panel-meta">
+          <span class="chip">
+            {{ loadingInvoices() ? 'Consultando facturas...' : invoicesPage().content.length + ' factura(s) cargada(s)' }}
+          </span>
+        </div>
+      </div>
+
+      <label class="field search-field">
+        <span>Buscar venta</span>
+        <input
+          class="input"
+          type="text"
+          [ngModel]="saleQuery()"
+          (ngModelChange)="updateSaleQuery($event)"
+          placeholder="Id, estado, mesa, factura o nombre del item" />
+      </label>
+
+      @if (loadingSales()) {
+        <div class="state-card">
+          <div class="spinner"></div>
+          <strong>Cargando ventas</strong>
+          <p>Consultando ventas disponibles para facturación.</p>
+        </div>
+      } @else if (filteredSales().length === 0) {
+        <div class="state-card">
+          <strong>Sin resultados</strong>
+          <p>No hay ventas visibles con los filtros actuales.</p>
+        </div>
+      } @else {
+        <div class="sales-list">
+          @for (sale of filteredSales(); track sale.id) {
+            <article
+              class="sale-card"
+              tabindex="0"
+              [class.selected]="selectedSaleId() === sale.id"
+              (click)="selectSale(sale)"
+              (keydown.enter)="selectSale(sale)"
+              (keydown.space)="selectSale(sale); $event.preventDefault()">
+              <div class="sale-card-head">
+                <div>
+                  <strong>Venta {{ saleLabel(sale.id) }}</strong>
+                </div>
+                <div class="sale-badges">
+                  <span class="badge" [ngClass]="saleStatusClass(sale.status)">
+                    {{ saleStatusLabel(sale.status) }}
+                  </span>
+                  @if (saleHasActiveInvoice(sale.id)) {
+                    <span class="badge ok">Facturada</span>
+                  }
+                </div>
+              </div>
+
+              <div class="sale-meta-grid">
+                <div>
+                  <span class="meta-label">Mesa</span>
+                  <strong>{{ saleTableLabel(sale.tableId) }}</strong>
+                </div>
+                <div>
+                  <span class="meta-label">Total</span>
+                  <span>{{ sale.totalAmount | currency:'COP':'symbol':'1.0-0' }}</span>
+                </div>
+                <div>
+                  <span class="meta-label">Items</span>
+                  <span>{{ saleItemsLabel(sale) }}</span>
+                </div>
+                <div>
+                  <span class="meta-label">Fecha</span>
+                  <span>{{ (sale.modifiedDate || sale.createdDate || '') | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+              </div>
+
+              @if (saleInvoice(sale.id); as saleInvoice) {
+                <div class="invoice-record" [class.blocking]="saleHasActiveInvoice(sale.id)">
+                  <div>
+                    <span class="meta-label">
+                      {{ saleHasActiveInvoice(sale.id) ? 'Factura activa' : 'Factura existente' }}
+                    </span>
+                    <strong>{{ saleInvoice.invoiceNumber || 'Sin consecutivo' }}</strong>
+                  </div>
+                  <div class="sale-card-actions">
+                    <span class="badge" [ngClass]="invoiceStatusClass(saleInvoice.status)">
+                      {{ invoiceStatusLabel(saleInvoice.status) }}
+                    </span>
+                  </div>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      }
+    </article>
+
+    <!-- RIGHT PANEL: Invoice document preview -->
+    <article class="panel detail-panel">
+      @if (selectedSale(); as sale) {
+        @if (invoiceRequestPreview(); as request) {
+
+          <!-- Existing invoice alert -->
+          @if (selectedSaleInvoice(); as existingInvoice) {
+            <section class="alert" [ngClass]="selectedActiveInvoice() ? 'success' : 'warn'">
+              <div>
+                <strong>
+                  {{ selectedActiveInvoice() ? 'Esta venta ya tiene una factura activa' : 'Esta venta ya tiene una factura registrada' }}
+                </strong>
+                <p>
+                  {{ selectedActiveInvoice() ? 'No se puede crear otra factura mientras la actual siga activa.' : 'La factura existente no está en un estado bloqueante.' }}
+                </p>
+              </div>
+              <div class="alert-tags">
+                <span class="chip">{{ existingInvoice.invoiceNumber || 'Sin consecutivo' }}</span>
+                <span class="chip" [ngClass]="invoiceStatusClass(existingInvoice.status)">
+                  {{ invoiceStatusLabel(existingInvoice.status) }}
+                </span>
+              </div>
+              <div class="inline-actions">
+                <button
+                  class="btn btn-secondary btn-sm"
+                  type="button"
+                  (click)="goToCashReceipt(existingInvoice.invoiceId, existingInvoice.locationId)">
+                  Ir a Recibo de Caja
+                </button>
+              </div>
+            </section>
+          }
+
+          <!-- ╔══════════════════════════════════════════════════════════╗ -->
+          <!-- ║              DOCUMENTO DE FACTURA                       ║ -->
+          <!-- ╚══════════════════════════════════════════════════════════╝ -->
+          <div class="invoice-doc">
+
+            <!-- ── ENCABEZADO / HEADER ─────────────────────────────── -->
+            <div class="invoice-doc-header">
+              <div class="invoice-doc-brand">
+                <div class="invoice-doc-logo">🍽️</div>
+                <div>
+                  <h2 class="invoice-doc-title">FACTURA DE VENTA</h2>
+                  <p class="invoice-doc-subtitle">EatUp Restaurant System</p>
+                </div>
+              </div>
+              <div class="invoice-doc-meta">
+                <div class="invoice-doc-meta-row">
+                  <span class="invoice-doc-meta-label">Consecutivo</span>
+                  <span class="invoice-doc-meta-value invoice-doc-consecutive">{{ previewInvoiceNumber() }}</span>
+                </div>
+                <div class="invoice-doc-meta-row">
+                  <span class="invoice-doc-meta-label">Estado</span>
+                  <span class="badge" [ngClass]="previewProcessTone()">{{ previewProcessLabel() }}</span>
+                </div>
+                <div class="invoice-doc-meta-row">
+                  <span class="invoice-doc-meta-label">Venta</span>
+                  <span class="invoice-doc-meta-value mono">Venta {{ previewSaleLabelShort() }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="invoice-doc-divider"></div>
+
+            <!-- ── INFO GRID: SEDE + FECHA ──────────────────────────── -->
+            <div class="invoice-info-grid">
+              <!-- Nombre de sede (editable) -->
+              <div class="invoice-info-block">
+                <span class="invoice-info-label">Nombre de Sede</span>
+                <input
+                  class="invoice-input"
+                  type="text"
+                  [ngModel]="form().locationName"
+                  (ngModelChange)="updateField('locationName', $event)"
+                  placeholder="Ej. EatUp Centro" />
+              </div>
+
+              <!-- Mesa -->
+              <div class="invoice-info-block">
+                <span class="invoice-info-label">Mesa</span>
+                <span class="invoice-info-value">{{ previewTableLabelText() }}</span>
+                @if (selectedTableId() && !tableLookup().table && !tableLookup().loading) {
+                  <button class="btn btn-ghost btn-xs" type="button" (click)="loadTableContext()">
+                    Consultar mesa
+                  </button>
+                }
+                @if (tableLookup().loading) {
+                  <span class="invoice-info-hint">Consultando...</span>
+                }
+                @if (tableLookup().session) {
+                  <div style="margin-top: 4px;">
+                    <span class="badge ok">Sesión Activa</span>
+                    <span class="invoice-info-hint" style="display: block; margin-top: 2px; color: #2e7d32;">
+                      Se liberará automáticamente al completar el pago.
+                    </span>
+                  </div>
+                } @else if (selectedTableId() && !tableLookup().loading) {
+                  <div style="margin-top: 4px;">
+                    <span class="badge alert">Sin Sesión Activa</span>
+                  </div>
+                }
+              </div>
+
+              <!-- Fecha de la venta -->
+              <div class="invoice-info-block">
+                <span class="invoice-info-label">Fecha de Venta</span>
+                <span class="invoice-info-value">
+                  {{ selectedSaleDate() ? (selectedSaleDate() | date:'dd/MM/yyyy HH:mm') : 'Sin fecha' }}
+                </span>
+              </div>
+
+            </div>
+
+            <div class="invoice-doc-divider"></div>
+
+            <!-- ── CLIENTE + DESCUENTO ─────────────────────────────── -->
+            <div class="invoice-client-grid">
+              <!-- Cliente -->
+              <div class="invoice-info-block">
+                <span class="invoice-info-label">Cliente</span>
+                @if (hasCustomerFromSale()) {
+                  <span class="invoice-info-value mono">{{ previewCustomerLabel() }}</span>
+                  <span class="invoice-info-hint">Tomado de la venta</span>
+                } @else {
+                  <div class="client-selection-row">
+                    <select
+                      class="invoice-input mono"
+                      [ngModel]="form().customerId"
+                      (ngModelChange)="updateField('customerId', $event)">
+                      <option value="">Selecciona un cliente (Opcional)</option>
+                      @for (c of clients(); track c.id) {
+                        <option [value]="c.id">
+                          {{ c.firstName }} {{ c.firstLastName }} ({{ c.documentNumber }})
+                        </option>
+                      }
+                    </select>
+                    <button
+                      class="btn btn-secondary btn-sm"
+                      type="button"
+                      (click)="openNewClientModal()">
+                      + Nuevo
+                    </button>
+                  </div>
+                  <span class="invoice-info-hint">{{ customerInputHint() }}</span>
+                }
+                @if (clientAppliesDiscount()) {
+                  @if (assignedCustomerDiscount(); as custDisc) {
+                    <span class="invoice-info-hint invoice-discount-badge" style="background:#dbeafe; color:#1e40af; margin-top:0.35rem; display:inline-block;">
+                      Cliente Aplica Descuento: {{ custDisc.description }} ({{ custDisc.percentage }}%)
+                    </span>
+                  } @else {
+                    <span class="invoice-info-hint" style="color:#eab308; margin-top:0.35rem; display:inline-block;">
+                      ⚠️ Cliente configurado con descuento pero no tiene asignación activa en el catálogo.
+                    </span>
+                  }
+                }
+              </div>
+
+              <!-- Descuento -->
+              <div class="invoice-info-block">
+                <span class="invoice-info-label">Descuento Adicional</span>
+                <select
+                  class="invoice-input"
+                  [ngModel]="selectedDiscountValue()"
+                  (ngModelChange)="selectDiscount($event)"
+                  [disabled]="loadingDiscounts()">
+                  <option [ngValue]="noDiscountValue">Sin descuento adicional</option>
+                  @for (discount of availableDiscounts(); track discount.id) {
+                    <option [ngValue]="discount.id">
+                      {{ discount.description }} ({{ discount.percentage }}%)
+                    </option>
+                  }
+                </select>
+                @if (normalizedDiscountPercentage() > 0) {
+                  <span class="invoice-info-hint invoice-discount-badge">
+                    {{ normalizedDiscountPercentage() }}% de descuento adicional
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="invoice-doc-divider"></div>
+
+            <!-- ── BODY: TABLA DE ITEMS ────────────────────────────── -->
+            <div class="invoice-items-section">
+              <div class="invoice-items-header">
+                <span>Detalle de la venta</span>
+                <span class="chip">{{ invoiceDetails().length }} ítem(s)</span>
+              </div>
+              <table class="invoice-table">
+                <thead>
+                  <tr>
+                    <th class="invoice-th-item">Ítem</th>
+                    <th class="invoice-th-qty">Cant.</th>
+                    <th class="invoice-th-price">Precio Unit.</th>
+                    <th class="invoice-th-sub">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (detail of invoiceDetails(); track detail.recipeId + '-' + $index) {
+                    <tr class="invoice-tr">
+                      <td class="invoice-td-item">
+                        <strong>{{ detail.itemName || 'Item sin nombre' }}</strong>
+                        @if (detail.comment && detail.comment !== 'Sin comentario') {
+                          <small class="invoice-item-comment">{{ detail.comment }}</small>
+                        }
+                      </td>
+                      <td class="invoice-td-center">{{ detail.quantity }}</td>
+                      <td class="invoice-td-right">{{ detail.unitPrice | currency:'COP':'symbol':'1.0-0' }}</td>
+                      <td class="invoice-td-right invoice-td-subtotal">{{ detail.subtotal | currency:'COP':'symbol':'1.0-0' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- ── FOOTER: TOTALES ─────────────────────────────────── -->
+            <div class="invoice-footer">
+              <div class="invoice-totals">
+                <div class="invoice-total-row">
+                  <span class="invoice-total-label">Subtotal</span>
+                  <span class="invoice-total-value">{{ baseSubtotal() | currency:'COP':'symbol':'1.0-0' }}</span>
+                </div>
+                @if (customerDiscountAmount() > 0) {
+                  <div class="invoice-total-row">
+                    <span class="invoice-total-label">
+                      Descuento Cliente
+                      <em class="invoice-total-hint">({{ customerDiscountPercentage() }}%)</em>
+                    </span>
+                    <span class="invoice-total-value invoice-total-discount" style="color:#2563eb;">
+                      -{{ customerDiscountAmount() | currency:'COP':'symbol':'1.0-0' }}
+                    </span>
+                  </div>
+                }
+                @if (discountAmount() > 0) {
+                  <div class="invoice-total-row">
+                    <span class="invoice-total-label">
+                      Descuento Adicional
+                      <em class="invoice-total-hint">({{ normalizedDiscountPercentage() }}%)</em>
+                    </span>
+                    <span class="invoice-total-value invoice-total-discount">
+                      -{{ discountAmount() | currency:'COP':'symbol':'1.0-0' }}
+                    </span>
+                  </div>
+                }
+                <div class="invoice-total-row">
+                  <span class="invoice-total-label">
+                    Impuesto
+                    <em class="invoice-total-hint">(incluido en el total)</em>
+                  </span>
+                  <span class="invoice-total-value invoice-total-tax">Incluido</span>
+                </div>
+                <div class="invoice-total-divider"></div>
+                <div class="invoice-total-row invoice-grand-total">
+                  <span class="invoice-grand-label">TOTAL FACTURA</span>
+                  <span class="invoice-grand-value">{{ totalAmount() | currency:'COP':'symbol':'1.0-0' }}</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <!-- ── FIN DOCUMENTO ─────────────────────────────────────── -->
+
+          <!-- Warnings -->
+          @if (warnings().length > 0) {
+            <section class="alert warn">
+              <strong>Advertencias</strong>
+              <ul class="message-list">
+                @for (warning of warnings(); track warning) {
+                  <li>{{ warning }}</li>
+                }
+              </ul>
+            </section>
+          }
+
+          <!-- Validation errors -->
+          @if (validationErrors().length > 0) {
+            <section class="alert error">
+              <strong>Validaciones pendientes</strong>
+              <ul class="message-list">
+                @for (error of validationErrors(); track error) {
+                  <li>{{ error }}</li>
+                }
+              </ul>
+            </section>
+          }
+
+          <!-- Actions -->
+          <footer class="actions">
+            <button class="btn btn-ghost" type="button" (click)="clearSelection()">Limpiar selección</button>
+            <button
+              class="btn btn-primary"
+              type="button"
+              [disabled]="creatingInvoice() || validationErrors().length > 0 || isSelectedSaleLocked()"
+              (click)="createInvoice()">
+              {{ creatingInvoice() ? 'Creando factura...' : 'Crear factura' }}
+            </button>
+          </footer>
+
+        }
+      } @else {
+        <div class="state-card empty-detail">
+          <div class="invoice-empty-icon">🧾</div>
+          <strong>Sin venta seleccionada</strong>
+          <p>Selecciona una venta de la lista para ver la vista previa de la factura.</p>
+        </div>
+      }
+    </article>
+  </section>
+
+  <!-- MODAL: Crear Cliente -->
+  @if (showNewClientModal()) {
+    <div class="modal-overlay">
+      <div class="modal-card">
+        <header class="modal-header">
+          <h3>Crear Nuevo Cliente</h3>
+          <button class="btn-close" type="button" (click)="closeNewClientModal()">&times;</button>
+        </header>
+
+        <main class="modal-body">
+          @if (clientFormError()) {
+            <div class="alert error">{{ clientFormError() }}</div>
+          }
+
+          <form [formGroup]="clientForm" (ngSubmit)="saveClient()" id="newClientForm" class="modal-form-grid">
+            
+            <div class="form-section-title">Datos Personales</div>
+            <div class="form-row">
+              <label class="modal-field">
+                <span>Primer Nombre *</span>
+                <input type="text" formControlName="firstName" class="input" />
+                @if (showClientFieldError('firstName')) {
+                  <span class="field-error-text">{{ clientFieldError('firstName') }}</span>
+                }
+              </label>
+              <label class="modal-field">
+                <span>Segundo Nombre</span>
+                <input type="text" formControlName="secondName" class="input" />
+                @if (showClientFieldError('secondName')) {
+                  <span class="field-error-text">{{ clientFieldError('secondName') }}</span>
+                }
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label class="modal-field">
+                <span>Primer Apellido *</span>
+                <input type="text" formControlName="firstLastName" class="input" />
+                @if (showClientFieldError('firstLastName')) {
+                  <span class="field-error-text">{{ clientFieldError('firstLastName') }}</span>
+                }
+              </label>
+              <label class="modal-field">
+                <span>Segundo Apellido *</span>
+                <input type="text" formControlName="secondLastName" class="input" />
+                @if (showClientFieldError('secondLastName')) {
+                  <span class="field-error-text">{{ clientFieldError('secondLastName') }}</span>
+                }
+              </label>
+            </div>
+
+            <div class="form-section-title">Identificación y Contacto</div>
+            <div class="form-row">
+              <label class="modal-field">
+                <span>Tipo Documento *</span>
+                <select formControlName="documentTypeId" class="input" [disabled]="catalogsLoading()">
+                  <option value="">Seleccione tipo</option>
+                  @for (type of documentTypes(); track type.id) {
+                    <option [value]="type.id">
+                      {{ type.shortLabel ? type.shortLabel + ' - ' + type.label : type.label }}
+                    </option>
+                  }
+                </select>
+                @if (showClientFieldError('documentTypeId')) {
+                  <span class="field-error-text">{{ clientFieldError('documentTypeId') }}</span>
+                }
+              </label>
+              <label class="modal-field">
+                <span>Nº Documento *</span>
+                <input type="text" formControlName="documentNumber" class="input" />
+                @if (showClientFieldError('documentNumber')) {
+                  <span class="field-error-text">{{ clientFieldError('documentNumber') }}</span>
+                }
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label class="modal-field">
+                <span>Email *</span>
+                <input type="email" formControlName="email" class="input" />
+                @if (showClientFieldError('email')) {
+                  <span class="field-error-text">{{ clientFieldError('email') }}</span>
+                }
+              </label>
+              <label class="modal-field">
+                <span>Teléfono *</span>
+                <input type="tel" formControlName="phone" (keypress)="onlyDigits($event)" class="input" />
+                @if (showClientFieldError('phone')) {
+                  <span class="field-error-text">{{ clientFieldError('phone') }}</span>
+                }
+              </label>
+            </div>
+
+            <div class="form-section-title">Ubicación y Tributos</div>
+            <div class="form-row">
+              <label class="modal-field">
+                <span>Departamento *</span>
+                <select formControlName="departmentId" class="input" [disabled]="catalogsLoading()">
+                  <option value="">Seleccione depto</option>
+                  @for (dept of departments(); track dept.id) {
+                    <option [value]="dept.id">{{ dept.label }}</option>
+                  }
+                </select>
+                @if (showClientFieldError('departmentId')) {
+                  <span class="field-error-text">{{ clientFieldError('departmentId') }}</span>
+                }
+              </label>
+              <label class="modal-field">
+                <span>Ciudad *</span>
+                <select formControlName="cityId" class="input" [disabled]="!clientForm.controls.departmentId.value || citiesLoading()">
+                  <option value="">
+                    {{ citiesLoading() ? 'Cargando...' : 'Seleccione ciudad' }}
+                  </option>
+                  @for (city of cities(); track city.id) {
+                    <option [value]="city.id">{{ city.label }}</option>
+                  }
+                </select>
+                @if (showClientFieldError('cityId')) {
+                  <span class="field-error-text">{{ clientFieldError('cityId') }}</span>
+                }
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label class="modal-field">
+                <span>Régimen Tributario *</span>
+                <select formControlName="taxRegimeId" class="input">
+                  @for (regime of taxRegimes; track regime.id) {
+                    <option [value]="regime.id">{{ regime.label }}</option>
+                  }
+                </select>
+                @if (showClientFieldError('taxRegimeId')) {
+                  <span class="field-error-text">{{ clientFieldError('taxRegimeId') }}</span>
+                }
+              </label>
+              <label class="modal-field">
+                <span>Vendedor Asignado *</span>
+                <input type="number" formControlName="assignedSellerId" min="1" class="input" />
+                @if (showClientFieldError('assignedSellerId')) {
+                  <span class="field-error-text">{{ clientFieldError('assignedSellerId') }}</span>
+                }
+              </label>
+            </div>
+
+            <label class="modal-field">
+              <span>Dirección *</span>
+              <input type="text" formControlName="address" class="input" />
+              @if (showClientFieldError('address')) {
+                <span class="field-error-text">{{ clientFieldError('address') }}</span>
+              }
+            </label>
+
+            <label class="modal-checkbox-row">
+              <input type="checkbox" formControlName="applyDiscounts" />
+              <span>Aplica Descuentos</span>
+            </label>
+
+          </form>
+        </main>
+
+        <footer class="modal-footer">
+          <button class="btn btn-ghost" type="button" (click)="closeNewClientModal()">Cancelar</button>
+          <button class="btn btn-primary" type="submit" form="newClientForm" [disabled]="clientSubmitting()">
+            {{ clientSubmitting() ? 'Creando...' : 'Crear Cliente' }}
+          </button>
+        </footer>
+      </div>
+    </div>
+  }
+</div>

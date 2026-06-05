@@ -1,0 +1,106 @@
+<div class="page-header">
+  <a class="back-link" routerLink="/commercial/customer-discount">← Volver a clientes por descuento</a>
+  <h1 class="page-title">{{ isEditing() ? 'Editar Asignación' : 'Nueva Asignación' }}</h1>
+  <p class="page-subtitle">{{ isEditing() ? 'Modifica los datos de la asignación.' : 'Asigna un descuento a un cliente.' }}</p>
+</div>
+
+<form [formGroup]="form" class="form-card" (ngSubmit)="save()">
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-number">1</span>
+      <h2>Descuento</h2>
+    </div>
+    <div class="field-group">
+      <label for="discountId">Selecciona el descuento</label>
+      <select id="discountId" class="input" formControlName="discountId">
+        <option value="">-- Selecciona --</option>
+        @for (d of discounts(); track d.id) {
+                    <option [value]="d.id" [title]="d.description + ' (' + d.percentage + '%)'">{{ truncate(d.description + ' (' + d.percentage + '%)') }}</option>
+        }
+      </select>
+      @if (showFieldError('discountId')) {
+        <span class="field-error">Selecciona un descuento.</span>
+      } @else {
+        <span class="field-hint">Solo se muestran descuentos activos.</span>
+      }
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-number">2</span>
+      <h2>Cliente</h2>
+    </div>
+    <div class="field-group">
+      <label for="customerId">Cliente</label>
+      <select id="customerId" class="input" formControlName="customerId">
+        <option value="">-- Selecciona un cliente --</option>
+        @for (c of clients(); track c.id) {
+          <option [value]="c.id" [title]="clientLabel(c)">{{ truncate(clientLabel(c)) }}</option>
+        }
+      </select>
+      @if (showFieldError('customerId')) {
+        <span class="field-error">Selecciona un cliente.</span>
+      } @else {
+        <span class="field-hint">Solo se muestran clientes activos con descuentos habilitados.</span>
+      }
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-number">3</span>
+      <h2>Ubicación</h2>
+    </div>
+    <div class="field-group">
+      <label>Ubicación</label>
+      <div class="input input--readonly">{{ locationName() }}</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-number">4</span>
+      <h2>Fechas</h2>
+    </div>
+
+    @if (!isEditing()) {
+      <div class="field-group">
+        <label>Fecha de asignación</label>
+        <div class="input input--readonly input-short">{{ assignedAt | date:'dd/MM/yyyy' }}</div>
+        <span class="field-hint">Se toma automáticamente: hoy.</span>
+      </div>
+    }
+
+    <div class="field-group" style="margin-top:1rem">
+      <label for="startDate">Fecha de inicio <span class="optional">(opcional)</span></label>
+      <input id="startDate" type="date" class="input input-short"
+             formControlName="startDate" />
+    </div>
+
+    <div class="field-group" style="margin-top:1rem">
+      <label for="endDate">Fecha de vencimiento <span class="optional">(opcional)</span></label>
+      <input id="endDate" type="date" class="input input-short"
+             formControlName="endDate" [min]="today" />
+      <span class="field-hint">Déjalo vacío si no tiene vencimiento.</span>
+      @if (form.errors?.['endDatePast'] && (endDateCtrl.touched || formSubmitted())) {
+        <span class="field-error">La fecha de vencimiento no puede ser en el pasado.</span>
+      }
+      @if (form.errors?.['endBeforeStart'] && (endDateCtrl.touched || formSubmitted())) {
+        <span class="field-error">La fecha de vencimiento debe ser posterior a la fecha de inicio.</span>
+      }
+    </div>
+  </div>
+
+  <div class="form-actions">
+    @if (generalError()) {
+      <div class="alert-error">{{ generalError() }}</div>
+    }
+    <button type="submit" class="btn-primary" [disabled]="submitting()">
+      {{ submitting() ? 'Guardando...' : isEditing() ? 'Actualizar' : 'Crear Asignación' }}
+    </button>
+    <a class="btn-ghost" routerLink="/commercial/customer-discount">Cancelar</a>
+  </div>
+
+</form>

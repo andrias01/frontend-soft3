@@ -1,0 +1,67 @@
+<div class="page-header">
+  <a class="back-link" routerLink="/commercial/customer-discount">← Volver a clientes por descuento</a>
+  <h1 class="page-title">Detalle de Asignación</h1>
+</div>
+
+@if (loading()) {
+  <p class="loading">Cargando...</p>
+}
+
+@if (error()) {
+  <div class="error-box">{{ error() }}</div>
+}
+
+@if (item()) {
+  <div class="detail-card">
+
+    <div class="detail-row">
+      <span class="detail-label">Descuento</span>
+      <span class="detail-value">{{ discountName() }}</span>
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-label">Cliente</span>
+      <span class="detail-value">{{ clientName() }}</span>
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-label">Ubicación</span>
+      <span class="detail-value">{{ locationName() }}</span>
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-label">Asignado</span>
+      <span class="detail-value">{{ item()!.assignedAt ? (item()!.assignedAt | date:'dd/MM/yyyy') : '—' }}</span>
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-label">Fecha de inicio</span>
+      <span class="detail-value">{{ item()!.startDate ? (item()!.startDate | date:'dd/MM/yyyy') : 'Sin inicio' }}</span>
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-label">Vencimiento</span>
+      <span class="detail-value">{{ item()!.endDate ? (item()!.endDate | date:'dd/MM/yyyy') : 'Sin vencimiento' }}</span>
+    </div>
+
+    <div class="detail-actions">
+      <a [routerLink]="['/commercial/customer-discount/edit', item()!.id]" class="btn-primary">Editar</a>
+      <button (click)="delete()" class="btn-danger-detail">Eliminar</button>
+
+      @if (showConfirm()) {
+        <div class="modal-overlay" (click)="cancelDelete()">
+          <div class="modal-box" (click)="$event.stopPropagation()">
+            <h3 class="modal-title">¿Eliminar asignación?</h3>
+            <p class="modal-desc">Esta acción no se puede deshacer.</p>
+            <div class="modal-actions">
+              <button class="btn-ghost" (click)="cancelDelete()">Cancelar</button>
+              <button class="btn-danger-modal" (click)="confirmDelete()">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      }
+      <a routerLink="/commercial/customer-discount" class="btn-ghost">Volver</a>
+    </div>
+
+  </div>
+}

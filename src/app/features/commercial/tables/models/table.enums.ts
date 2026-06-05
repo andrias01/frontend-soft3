@@ -1,0 +1,14 @@
+export enum TableStatus {
+  AVAILABLE = 'AVAILABLE',
+  OCCUPIED = 'OCCUPIED',
+  RESERVED = 'RESERVED',
+  INACTIVE = 'INACTIVE',
+}
+
+export enum ReservationStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  SEATED = 'SEATED',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
+}

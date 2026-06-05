@@ -1,0 +1,126 @@
+<section class="client-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Commercial</p>
+      <h1>Clientes</h1>
+      <p class="subtitle">Gestiona los clientes disponibles para facturacion y descuentos.</p>
+    </div>
+
+    <a class="primary-action" routerLink="create">Nuevo cliente</a>
+  </header>
+
+  <div class="summary-grid">
+    <article class="summary-card">
+      <span>Total</span>
+      <strong>{{ totalClients() }}</strong>
+    </article>
+    <article class="summary-card">
+      <span>Activos</span>
+      <strong>{{ activeClients() }}</strong>
+    </article>
+    <article class="summary-card">
+      <span>Inactivos</span>
+      <strong>{{ inactiveClients() }}</strong>
+    </article>
+  </div>
+
+  <div class="toolbar">
+    <label class="search-box">
+      <span>Buscar</span>
+      <input
+        type="search"
+        placeholder="Nombre, documento, email o telefono"
+        [value]="search()"
+        (input)="onSearch($event)"
+      />
+    </label>
+
+    <div class="segmented" aria-label="Filtrar clientes por estado">
+      <button type="button" [class.active]="statusFilter() === 'ALL'" (click)="setStatusFilter('ALL')">
+        Todos
+      </button>
+      <button type="button" [class.active]="statusFilter() === 'ACTIVE'" (click)="setStatusFilter('ACTIVE')">
+        Activos
+      </button>
+      <button type="button" [class.active]="statusFilter() === 'INACTIVE'" (click)="setStatusFilter('INACTIVE')">
+        Inactivos
+      </button>
+    </div>
+  </div>
+
+  @if (toast(); as currentToast) {
+    <div class="toast" [class.error]="currentToast.type === 'error'">
+      <span>{{ currentToast.message }}</span>
+      <button type="button" (click)="clearToast()">Cerrar</button>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="alert">{{ error() }}</div>
+  }
+
+  <div class="table-shell">
+    @if (loading()) {
+      <div class="state">Cargando clientes...</div>
+    } @else if (paginatedClients().length === 0) {
+      <div class="state">No hay clientes para mostrar.</div>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Documento</th>
+            <th>Contacto</th>
+            <th>Descuentos</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (client of paginatedClients(); track client.id ?? client.documentNumber) {
+            <tr>
+              <td>
+                <strong>{{ fullName(client) }}</strong>
+                <small>{{ cityLabel(client.cityId) }}</small>
+              </td>
+              <td>
+                <span>{{ client.documentNumber }}</span>
+                <small>{{ documentTypeLabel(client.documentTypeId) }}</small>
+              </td>
+              <td>
+                <span>{{ client.email }}</span>
+                <small>{{ client.phone }}</small>
+              </td>
+              <td>{{ client.applyDiscounts ? 'Si' : 'No' }}</td>
+              <td>
+                <span class="status" [class.inactive]="statusOf(client) === 'INACTIVE'">
+                  {{ statusOf(client) === 'ACTIVE' ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="actions">
+                <a [routerLink]="['edit', client.id]" [class.disabled]="!client.id">Editar</a>
+                <button
+                  type="button"
+                  [disabled]="!client.id || changingStatus() === client.id"
+                  (click)="toggleStatus(client)"
+                >
+                  {{ statusOf(client) === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  <footer class="pagination">
+    <button type="button" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
+      Anterior
+    </button>
+    <span>Pagina {{ currentPage() }} de {{ totalPages() }}</span>
+    <button type="button" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">
+      Siguiente
+    </button>
+  </footer>
+</section>

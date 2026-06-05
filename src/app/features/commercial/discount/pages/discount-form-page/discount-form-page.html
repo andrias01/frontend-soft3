@@ -1,0 +1,81 @@
+<div class="page-header">
+  <a class="back-link" routerLink="..">← Volver a descuentos</a>
+  <h1 class="page-title">{{ isEditing() ? 'Editar Descuento' : 'Nuevo Descuento' }}</h1>
+  <p class="page-subtitle">
+    {{ isEditing() ? 'Modifica los datos del descuento.' : 'Completa los datos para registrar un nuevo descuento.' }}
+  </p>
+</div>
+
+<form [formGroup]="form" class="form-card" (ngSubmit)="save()">
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-number">1</span>
+      <h2>Categoría</h2>
+    </div>
+    <div class="field-group">
+      <label for="categoryId">Categoría</label>
+      <select id="categoryId" class="input" formControlName="categoryId">
+        <option value="">-- Selecciona una categoría --</option>
+        @for (c of categories(); track c.id) {
+          <option [value]="c.id" [title]="c.name">{{ truncate(c.name) }}</option>
+        }
+      </select>
+      @if (showFieldError('categoryId')) {
+        <span class="field-error">Selecciona una categoría.</span>
+      } @else {
+        <span class="field-hint">Solo se muestran categorías activas de tipo descuento.</span>
+      }
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-number">2</span>
+      <h2>Porcentaje de Descuento</h2>
+    </div>
+    <div class="field-group">
+      <label for="percentage">Porcentaje (%)</label>
+      <input id="percentage" type="number" class="input input-short"
+             placeholder="Ej: 10" min="1" max="100"
+             formControlName="percentage"
+             (keydown)="$event.key==='-'||$event.key==='+'||$event.key==='e'||$event.key==='E'||$event.key==='.'?$event.preventDefault():null"
+            (input)="onPercentageInput($event)"
+             (wheel)="onWheel($event)" />
+      @if (showFieldError('percentage')) {
+        <span class="field-error">{{ fieldError('percentage') }}</span>
+      } @else {
+        <span class="field-hint">Debe ser un valor entre 1 y 100.</span>
+      }
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-number">3</span>
+      <h2>Descripción</h2>
+    </div>
+    <div class="field-group">
+      <label for="description">Descripción del descuento</label>
+      <input id="description" type="text" maxlength="100" class="input"
+             placeholder="Ej: Descuento de bienvenida"
+             formControlName="description" />
+      @if (showFieldError('description')) {
+        <span class="field-error">{{ fieldError('description') }}</span>
+      } @else {
+        <span class="field-hint">Entre 5 y 100 caracteres.</span>
+      }
+    </div>
+  </div>
+
+  <div class="form-actions">
+    @if (generalError()) {
+      <div class="alert-error">{{ generalError() }}</div>
+    }
+    <button type="submit" class="btn-primary" [disabled]="submitting()">
+      {{ submitting() ? 'Guardando...' : isEditing() ? 'Actualizar' : 'Crear Descuento' }}
+    </button>
+    <a class="btn-ghost" routerLink="..">Cancelar</a>
+  </div>
+
+</form>

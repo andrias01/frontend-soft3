@@ -1,0 +1,236 @@
+<div class="register-wrapper">
+  <div class="register-card">
+    <div class="register-header">
+      <h1>Registro de usuario</h1>
+      <p>Completa el formulario para crear una cuenta nueva.</p>
+    </div>
+
+    @if (errorMsg()) {
+      <div class="alert alert-error">{{ errorMsg() }}</div>
+    }
+
+    @if (successMsg()) {
+      <div class="alert alert-success">{{ successMsg() }}</div>
+    }
+
+    @if (loadingCatalogs()) {
+      <p class="loading-text">Cargando catalogos...</p>
+    } @else {
+      <form class="register-form" #registerForm="ngForm" (ngSubmit)="submit(registerForm)">
+        <label>
+          Nombres
+          <input
+            type="text"
+            name="firstName"
+            [(ngModel)]="model.firstName"
+            required
+            minlength="2"
+            maxlength="100"
+            #firstName="ngModel"
+          />
+          @if (firstName.invalid && (firstName.dirty || firstName.touched)) {
+            <span class="field-error">Ingresa nombres validos (2-100 caracteres).</span>
+          }
+        </label>
+
+        <label>
+          Apellidos
+          <input
+            type="text"
+            name="lastName"
+            [(ngModel)]="model.lastName"
+            required
+            minlength="2"
+            maxlength="100"
+            #lastName="ngModel"
+          />
+          @if (lastName.invalid && (lastName.dirty || lastName.touched)) {
+            <span class="field-error">Ingresa apellidos validos (2-100 caracteres).</span>
+          }
+        </label>
+
+        <label>
+          Tipo de documento
+          <select name="documentTypeId" [(ngModel)]="model.documentTypeId" required #documentTypeId="ngModel">
+            <option value="">Selecciona...</option>
+            @for (doc of documentTypes(); track doc.id) {
+              <option [value]="doc.id">{{ doc.name }}</option>
+            }
+          </select>
+          @if (documentTypeId.invalid && (documentTypeId.dirty || documentTypeId.touched)) {
+            <span class="field-error">Selecciona el tipo de documento.</span>
+          }
+        </label>
+
+        <label>
+          Numero de documento
+          <input
+            type="text"
+            name="documentNumber"
+            [(ngModel)]="model.documentNumber"
+            required
+            minlength="5"
+            maxlength="30"
+            #documentNumber="ngModel"
+          />
+          @if (documentNumber.invalid && (documentNumber.dirty || documentNumber.touched)) {
+            <span class="field-error">Debe tener entre 5 y 30 caracteres.</span>
+          }
+        </label>
+
+        <label>
+          Telefono
+          <input
+            type="text"
+            name="phone"
+            [(ngModel)]="model.phone"
+            required
+            maxlength="10"
+            pattern="^[0-9]{10}$"
+            #phone="ngModel"
+          />
+          @if (phone.invalid && (phone.dirty || phone.touched)) {
+            <span class="field-error">El telefono debe contener exactamente 10 digitos.</span>
+          }
+        </label>
+
+        <label>
+          Correo electronico
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="model.email"
+            required
+            maxlength="150"
+            #email="ngModel"
+          />
+          @if (email.invalid && (email.dirty || email.touched)) {
+            <span class="field-error">Ingresa un correo valido.</span>
+          }
+        </label>
+
+        <label>
+          Contrasena
+          <input
+            type="password"
+            name="password"
+            [(ngModel)]="model.password"
+            required
+            minlength="8"
+            maxlength="72"
+            #password="ngModel"
+          />
+          @if (password.invalid && (password.dirty || password.touched)) {
+            <span class="field-error">Minimo 8 caracteres con mayuscula, minuscula, numero y simbolo.</span>
+          }
+        </label>
+
+        <label>
+          Confirmar contrasena
+          <input
+            type="password"
+            name="confirmPassword"
+            [(ngModel)]="model.confirmPassword"
+            required
+            #confirmPassword="ngModel"
+          />
+          @if (confirmPassword.invalid && (confirmPassword.dirty || confirmPassword.touched)) {
+            <span class="field-error">Confirma la contrasena.</span>
+          }
+        </label>
+
+        @if (passwordsMismatch) {
+          <div class="field-error field-full">Las contrasenas no coinciden.</div>
+        }
+
+        <label>
+          Fecha de nacimiento
+          <input type="date" name="birthDate" [(ngModel)]="model.birthDate" required #birthDate="ngModel" />
+          @if (birthDate.invalid && (birthDate.dirty || birthDate.touched)) {
+            <span class="field-error">Selecciona la fecha de nacimiento.</span>
+          }
+        </label>
+
+        <label>
+          Departamento
+          <select
+            name="departmentId"
+            [(ngModel)]="model.departmentId"
+            (ngModelChange)="onDepartmentChange()"
+            required
+            #departmentId="ngModel"
+          >
+            <option value="">Selecciona...</option>
+            @for (department of departments(); track department.id) {
+              <option [value]="department.id">{{ department.name }}</option>
+            }
+          </select>
+          @if (departmentId.invalid && (departmentId.dirty || departmentId.touched)) {
+            <span class="field-error">Selecciona un departamento.</span>
+          }
+        </label>
+
+        <label>
+          Ciudad
+          <select name="cityId" [(ngModel)]="model.cityId" required #cityId="ngModel">
+            <option value="">Selecciona...</option>
+            @for (city of cities(); track city.id) {
+              <option [value]="city.id">{{ city.name }}</option>
+            }
+          </select>
+          @if (cityId.invalid && (cityId.dirty || cityId.touched)) {
+            <span class="field-error">Selecciona una ciudad.</span>
+          }
+        </label>
+
+        <label>
+          Sede
+          <select
+            name="locationId"
+            [(ngModel)]="model.locationId"
+            required
+            #locationId="ngModel"
+            [disabled]="locations().length === 0"
+            >
+            <option value="">Selecciona una sede activa...</option>
+            @for (location of locations(); track location.id) {
+              <option [value]="location.id">{{ location.name }}</option>
+            }
+          </select>
+          @if (locations().length === 0) {
+            <span class="field-error">No hay sedes activas disponibles.</span>
+          } @else if (locationId.invalid && (locationId.dirty || locationId.touched)) {
+            <span class="field-error">Selecciona una sede activa.</span>
+          }
+        </label>
+
+        <label class="field-full">
+          Direccion
+          <input
+            type="text"
+            name="address"
+            [(ngModel)]="model.address"
+            required
+            minlength="5"
+            maxlength="255"
+            #address="ngModel"
+          />
+          @if (address.invalid && (address.dirty || address.touched)) {
+            <span class="field-error">La direccion debe tener entre 5 y 255 caracteres.</span>
+          }
+        </label>
+
+        <div class="actions field-full">
+          <a class="btn-link" [routerLink]="['/login']">Volver al login</a>
+          <button type="submit" class="btn-submit" [disabled]="loading() || loadingCatalogs() || locations().length === 0 || registerForm.invalid">
+            @if (loading()) {
+              Registrando...
+            } @else {
+              Registrar usuario
+            }
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

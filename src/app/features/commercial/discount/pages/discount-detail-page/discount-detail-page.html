@@ -1,0 +1,59 @@
+<div class="page-header">
+  <a class="back-link" routerLink="..">← Volver a descuentos</a>
+  <h1 class="page-title">Detalle del Descuento</h1>
+</div>
+
+@if (loading()) {
+  <p class="loading">Cargando...</p>
+}
+
+@if (error()) {
+  <div class="error-box">{{ error() }}</div>
+}
+
+@if (discount()) {
+  <div class="detail-card">
+
+    <div class="detail-row">
+      <span class="detail-label">Descripción</span>
+      <span class="detail-value">{{ discount()!.description }}</span>
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-label">Porcentaje</span>
+      <span class="detail-value">
+        <span class="pct-badge">{{ discount()!.percentage }}%</span>
+      </span>
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-label">Estado</span>
+      <span class="detail-value">
+        <span [class]="discount()!.status ? 'badge-active' : 'badge-inactive'">
+          {{ discount()!.status ? 'Activo' : 'Inactivo' }}
+        </span>
+      </span>
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-label">Categoría</span>
+      <span class="detail-value">{{ categoryName() }}</span>
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-label">Creado</span>
+      <span class="detail-value">{{ discount()!.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+    </div>
+
+    <div class="detail-row">
+      <span class="detail-label">Modificado</span>
+      <span class="detail-value">{{ discount()!.modifiedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+    </div>
+
+    <div class="detail-actions">
+        <a [routerLink]="['../edit', discount()!.id]" class="btn-primary">Editar</a>
+        <a routerLink=".." class="btn-ghost">Volver</a>
+    </div>
+
+  </div>
+}

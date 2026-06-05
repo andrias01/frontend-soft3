@@ -1,0 +1,246 @@
+<section class="seller-page">
+  <header class="page-header">
+    <div>
+      <h1>Gestión de Vendedores</h1>
+      <p>Administra la información y estado de tus vendedores.</p>
+    </div>
+  </header>
+
+  <section class="stats-grid" aria-label="Resumen de vendedores">
+    <article class="stat-card total">
+      <span class="stat-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </span>
+      <div>
+        <span class="stat-label">Total Vendedores</span>
+        <strong>{{ totalSellers() }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card active">
+      <span class="stat-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+      </span>
+      <div>
+        <span class="stat-label">Vendedores Activos</span>
+        <strong>{{ activeSellers() }}</strong>
+      </div>
+    </article>
+
+    <article class="stat-card inactive">
+      <span class="stat-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </span>
+      <div>
+        <span class="stat-label">Vendedores Inactivos</span>
+        <strong>{{ inactiveSellers() }}</strong>
+      </div>
+    </article>
+  </section>
+
+  <div class="toolbar">
+    <label class="search-box">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" placeholder="Buscar vendedores..." [value]="search()" (input)="onSearch($event)" />
+    </label>
+
+    <button type="button" class="primary-button" (click)="openCreate()">
+      <span aria-hidden="true">+</span>
+      Agregar Vendedor
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <p>Cargando vendedores...</p>
+    </div>
+  }
+
+  @if (!loading()) {
+    @if (filteredSellers().length === 0) {
+      <section class="empty-state">
+        <h2>No hay vendedores para mostrar</h2>
+        <p>Crea un vendedor o ajusta la busqueda para ver resultados.</p>
+        <button type="button" class="primary-button" (click)="openCreate()">Agregar Vendedor</button>
+      </section>
+    } @else {
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo Doc.</th>
+              <th>Identificación</th>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Correo</th>
+              <th>Comisión</th>
+              <th>Estado</th>
+              <th class="right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (seller of filteredSellers(); track seller.id ?? seller.identificationNumber) {
+              <tr>
+                <td><span class="doc-pill">{{ documentTypeShortLabel(seller.documentTypeId) }}</span></td>
+                <td class="mono">{{ seller.identificationNumber }}</td>
+                <td class="strong">{{ sellerName(seller) }}</td>
+                <td>{{ seller.phone }}</td>
+                <td class="email-cell">{{ seller.email }}</td>
+                <td>{{ seller.commissionPercentage | number:'1.0-2' }}%</td>
+                <td>
+                  <span class="status-badge" [class.inactive]="statusOf(seller) === 'INACTIVE'">
+                    {{ statusLabel(seller.status) }}
+                  </span>
+                </td>
+                <td class="actions">
+                  <button type="button" class="action-button" (click)="openEdit(seller)">
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="action-button"
+                    [class.danger]="statusOf(seller) === 'ACTIVE'"
+                    [disabled]="!seller.id || changingStatus() === seller.id"
+                    (click)="toggleStatus(seller)">
+                    @if (changingStatus() === seller.id) {
+                      Guardando...
+                    } @else {
+                      {{ statusOf(seller) === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
+                    }
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>
+
+@if (drawerOpen()) {
+  <div class="drawer-overlay" (click)="closeDrawer()">
+    <aside class="drawer" (click)="$event.stopPropagation()">
+      <form [formGroup]="form" (ngSubmit)="saveSeller()">
+        <header class="drawer-header">
+          <div>
+            <span>Vendedor</span>
+            <h2>{{ formMode() === 'create' ? 'Agregar Vendedor' : 'Editar Vendedor' }}</h2>
+          </div>
+          <button type="button" class="icon-button" aria-label="Cerrar" (click)="closeDrawer()">×</button>
+        </header>
+
+        <input type="hidden" formControlName="locationId" />
+
+        <div class="form-grid">
+          <label>
+            Tipo de Documento
+            <select formControlName="documentTypeId">
+              <option value="" disabled>Selecciona un tipo</option>
+              @if (hasUnknownDocumentType()) {
+                <option [value]="form.controls.documentTypeId.value">Tipo registrado</option>
+              }
+              @for (type of documentTypes; track type.id) {
+                <option [value]="type.id">{{ type.label }}</option>
+              }
+            </select>
+            @if (showFieldError('documentTypeId')) {
+              <small>{{ fieldError('documentTypeId') }}</small>
+            }
+          </label>
+
+          <label>
+            Identificación
+            <input
+              type="text"
+              formControlName="identificationNumber"
+              inputmode="numeric"
+              maxlength="20"
+              (keypress)="onlyDigits($event)" />
+            @if (showFieldError('identificationNumber')) {
+              <small>{{ fieldError('identificationNumber') }}</small>
+            }
+          </label>
+
+          <label>
+            Nombre
+            <input type="text" formControlName="firstName" maxlength="100" />
+            @if (showFieldError('firstName')) {
+              <small>{{ fieldError('firstName') }}</small>
+            }
+          </label>
+
+          <label>
+            Apellido
+            <input type="text" formControlName="lastName" maxlength="100" />
+            @if (showFieldError('lastName')) {
+              <small>{{ fieldError('lastName') }}</small>
+            }
+          </label>
+
+          <label>
+            Teléfono
+            <input
+              type="tel"
+              formControlName="phone"
+              inputmode="numeric"
+              maxlength="10"
+              (keypress)="onlyDigits($event)" />
+            @if (showFieldError('phone')) {
+              <small>{{ fieldError('phone') }}</small>
+            }
+          </label>
+
+          <label>
+            Correo Electrónico
+            <input type="email" formControlName="email" />
+            @if (showFieldError('email')) {
+              <small>{{ fieldError('email') }}</small>
+            }
+          </label>
+
+          <label>
+            Comisión (%)
+            <input
+              type="number"
+              formControlName="commissionPercentage"
+              min="0"
+              max="30"
+              step="0.01"
+              (keydown)="blockInvalidNumberInput($event)" />
+            @if (showFieldError('commissionPercentage')) {
+              <small>{{ fieldError('commissionPercentage') }}</small>
+            }
+          </label>
+
+          @if (formMode() === 'edit') {
+            <label>
+              Estado
+              <select formControlName="status">
+                <option value="ACTIVE">Activo</option>
+                <option value="INACTIVE">Inactivo</option>
+              </select>
+              @if (showFieldError('status')) {
+                <small>{{ fieldError('status') }}</small>
+              }
+            </label>
+          }
+        </div>
+
+        <footer class="drawer-actions">
+          <button type="button" class="secondary-button" (click)="closeDrawer()">Cancelar</button>
+          <button type="submit" class="primary-button" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </footer>
+      </form>
+    </aside>
+  </div>
+}
+
+@if (toast(); as currentToast) {
+  <aside class="seller-toast" [class.error]="currentToast.type === 'error'">
+    <span>{{ currentToast.message }}</span>
+    <button type="button" (click)="clearToast()" aria-label="Cerrar notificación">×</button>
+  </aside>
+}

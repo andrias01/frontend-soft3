@@ -1,0 +1,56 @@
+.page-header { margin-bottom: 2rem; }
+.back-link { display: inline-block; margin-bottom: 0.75rem; font-size: 0.875rem; color: var(--color-primary); text-decoration: none; }
+.back-link:hover { text-decoration: underline; }
+.page-title { font-size: 1.75rem; font-weight: 700; color: var(--color-secondary); margin: 0 0 0.25rem 0; }
+.page-subtitle { color: #64748b; margin: 0; font-size: 0.9375rem; max-width: 600px; }
+
+.form-card { background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 2rem; display: flex; flex-direction: column; gap: 2rem; max-width: 680px; }
+
+.step { display: flex; flex-direction: column; gap: 1.25rem; }
+.step-header { display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem; }
+.step-number { width: 28px; height: 28px; background: var(--color-background); color: var(--color-primary); border-radius: 50%; border: 1px solid var(--color-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.875rem; flex-shrink: 0; }
+.step-header h2 { font-size: 1rem; font-weight: 600; color: #1e293b; margin: 0; }
+
+.field-group { display: flex; flex-direction: column; gap: 0.5rem; }
+label { font-size: 0.875rem; font-weight: 600; color: #374151; }
+.input { padding: 0.625rem 0.875rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.9375rem; color: #1e293b; transition: border-color 0.2s; width: 100%; box-sizing: border-box; overflow: hidden; }
+.input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255,107,53,0.2); }
+.input-short { max-width: 150px; }
+.field-hint { font-size: 0.8rem; color: #94a3b8; }
+
+.form-actions { display: flex; flex-direction: row; align-items: center; gap: 1rem; flex-wrap: wrap; border-top: 1px solid #f1f5f9; padding-top: 1.5rem; }
+.btn-primary { background: var(--color-primary); color: white; padding: 0.65rem 1.5rem; border: none; border-radius: 0.5rem; font-weight: 600; font-size: 0.9375rem; cursor: pointer; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-ghost { background: none; border: 1px solid #e2e8f0; color: #64748b; padding: 0.65rem 1.2rem; border-radius: 0.5rem; text-decoration: none; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-ghost:hover { background: #f1f5f9; color: #1e293b; }
+.alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; width: 100%; box-sizing: border-box; }
+.alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; width: 100%; box-sizing: border-box; }
+
+.field-error { font-size: 0.8rem; color: #dc2626; }
+
+/* ── Cada step entra con delay escalonado ── */
+@keyframes stepIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.step:nth-child(1) { animation: stepIn 0.35s ease both 0.05s; }
+.step:nth-child(2) { animation: stepIn 0.35s ease both 0.12s; }
+.step:nth-child(3) { animation: stepIn 0.35s ease both 0.19s; }
+.step:nth-child(4) { animation: stepIn 0.35s ease both 0.26s; }
+
+.form-actions { animation: stepIn 0.35s ease both 0.33s; }
+
+/* ── Focus en inputs con transición suave ── */
+.input {
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.input:focus {
+  transform: scale(1.01);
+}
+
+select.input {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}

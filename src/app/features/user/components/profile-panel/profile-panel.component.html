@@ -1,0 +1,104 @@
+<div class="panel-backdrop">
+  <button
+    type="button"
+    class="panel-dismiss"
+    aria-label="Cerrar panel de perfil"
+    (click)="panelClosed.emit()"
+  ></button>
+  <section class="panel">
+    <div class="panel-header">
+      <h3>Mis datos</h3>
+      <button type="button" class="btn-close" (click)="panelClosed.emit()">✕</button>
+    </div>
+
+    @if (errorMsg()) {
+      <div class="panel-alert panel-alert-error">{{ errorMsg() }}</div>
+    }
+
+    @if (successMsg()) {
+      <div class="panel-alert panel-alert-success">{{ successMsg() }}</div>
+    }
+
+    @if (loadingProfile()) {
+      <p class="panel-loading">Cargando datos del usuario...</p>
+    } @else {
+      <div class="panel-grid">
+        <label>
+          Nombres
+          <input type="text" [value]="editable().firstName" (input)="updateField('firstName', $any($event.target).value)" />
+        </label>
+
+        <label>
+          Apellidos
+          <input type="text" [value]="editable().lastName" (input)="updateField('lastName', $any($event.target).value)" />
+        </label>
+
+        <label>
+          Tipo de documento
+          <select [value]="editable().documentTypeId" (change)="updateField('documentTypeId', $any($event.target).value)">
+            @for (doc of documentTypes(); track doc.id) {
+              <option [value]="doc.id">{{ doc.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Numero de documento
+          <input type="text" [value]="editable().documentNumber" (input)="updateField('documentNumber', $any($event.target).value)" />
+        </label>
+
+        <label>
+          Telefono
+          <input type="text" [value]="editable().phone" (input)="updateField('phone', $any($event.target).value)" />
+        </label>
+
+        <label>
+          Correo electronico
+          <input type="email" [value]="editable().email" readonly />
+        </label>
+
+        <label>
+          Fecha de nacimiento
+          <input type="date" [value]="editable().birthDate" (input)="updateField('birthDate', $any($event.target).value)" />
+        </label>
+
+        <label>
+          Departamento
+          <select [value]="editable().departmentId" (change)="onDepartmentChange($any($event.target).value)">
+            @for (department of departments(); track department.id) {
+              <option [value]="department.id">{{ department.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Ciudad
+          <select [value]="editable().cityId" (change)="updateField('cityId', $any($event.target).value)">
+            @for (city of cities(); track city.id) {
+              <option [value]="city.id">{{ city.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Sede
+          <select [value]="editable().locationId" (change)="updateField('locationId', $any($event.target).value)">
+            @for (location of locations(); track location.id) {
+              <option [value]="location.id">{{ location.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field-full">
+          Direccion
+          <input type="text" [value]="editable().address" (input)="updateField('address', $any($event.target).value)" />
+        </label>
+      </div>
+
+      <div class="panel-actions">
+        <button type="button" class="btn-cancel" (click)="panelClosed.emit()">Cancelar</button>
+        <button type="button" class="btn-save" (click)="saveProfile()" [disabled]="loadingProfile()">Guardar</button>
+      </div>
+    }
+  </section>
+</div>

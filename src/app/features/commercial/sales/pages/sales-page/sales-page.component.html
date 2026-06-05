@@ -1,0 +1,776 @@
+<div class="sales-page">
+  <header class="page-header">
+    <h1>Ventas</h1>
+    <p>Gestiona órdenes, recetas y trazabilidad de ventas.</p>
+  </header>
+
+  <section class="main-grid">
+    <article class="surface catalog-panel">
+      <div class="panel-head">
+        <h2>Catálogo de recetas</h2>
+      </div>
+
+      <div class="filters-card">
+        <div class="filters-grid recipe-filters-grid">
+          <div class="filter-field filter-field-full">
+            <label class="filter-label">Buscar receta</label>
+            <input
+              class="filter-input"
+              [(ngModel)]="recipeSearchTerm"
+              (ngModelChange)="applyRecipeFilters()"
+              placeholder="Buscar receta por nombre"
+            />
+          </div>
+
+          <div class="filter-field">
+            <label class="filter-label">Estado</label>
+            <select
+              class="filter-select"
+              [(ngModel)]="recipeStatusFilter"
+              (ngModelChange)="applyRecipeFilters()"
+            >
+              <option value="ALL">Todas</option>
+              <option value="ACTIVE">Activas</option>
+              <option value="INACTIVE">Inactivas</option>
+            </select>
+          </div>
+
+          <div class="filter-field">
+            <label class="filter-label">Precio mínimo</label>
+            <input
+              class="filter-input"
+              type="number"
+              min="0"
+              [(ngModel)]="recipeMinPrice"
+              (ngModelChange)="applyRecipeFilters()"
+            />
+          </div>
+
+          <div class="filter-field">
+            <label class="filter-label">Precio máximo</label>
+            <input
+              class="filter-input"
+              type="number"
+              min="0"
+              [(ngModel)]="recipeMaxPrice"
+              (ngModelChange)="applyRecipeFilters()"
+            />
+          </div>
+
+          <div class="filter-field">
+            <label class="filter-label">Orden</label>
+            <select
+              class="filter-select"
+              [(ngModel)]="recipeSort"
+              (ngModelChange)="applyRecipeFilters()"
+            >
+              <option value="NAME_ASC">Nombre A-Z</option>
+              <option value="NAME_DESC">Nombre Z-A</option>
+              <option value="PRICE_ASC">Precio menor a mayor</option>
+              <option value="PRICE_DESC">Precio mayor a menor</option>
+            </select>
+          </div>
+
+          <button
+            class="clear-filters-btn"
+            type="button"
+            (click)="clearRecipeFilters()"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+      </div>
+
+      <div class="recipe-grid">
+        @for (r of filteredRecipes; track r.id) {
+          <article class="recipe-card">
+            <div>
+              <h4 class="truncate">{{ r.name }}</h4>
+              <p class="price">{{ r.sellingPrice | currency:'COP':'symbol':'1.0-0' }}</p>
+            </div>
+
+            <div class="badges">
+              <span
+                class="badge"
+                [class.ok]="r.active"
+                [class.error]="!r.active"
+              >
+                {{ r.active ? 'Activa' : 'Inactiva' }}
+              </span>
+            </div>
+
+            <button
+              class="btn btn-primary"
+              type="button"
+              (click)="addToCart(r)"
+              [disabled]="!r.active || r.sellingPrice <= 0"
+            >
+              Agregar
+            </button>
+          </article>
+        } @empty {
+          <div class="empty-state">
+            No se encontraron recetas con esos filtros.
+          </div>
+        }
+      </div>
+    </article>
+
+    <article class="surface order-panel">
+      <div class="order-head">
+        <h2>🛒 Orden actual</h2>
+        <span>{{ cartItems.length }} recetas</span>
+      </div>
+
+      <div class="meta">
+        <label>Vendedor</label>
+        <button
+          class="selector-btn"
+          type="button"
+          (click)="showSellerModal = true"
+          [attr.aria-label]="selectedSellerName || 'Seleccionar vendedor'"
+        >
+          {{ selectedSellerName || 'Seleccionar vendedor' }}
+        </button>
+      </div>
+
+      <div class="meta">
+        <label>Mesa</label>
+        <button
+          class="selector-btn"
+          type="button"
+          (click)="showTableModal = true"
+          [attr.aria-label]="selectedTableName || 'Seleccionar mesa'"
+        >
+          {{ selectedTableName || 'Seleccionar mesa' }}
+        </button>
+      </div>
+
+      <p class="muted">Sede configurada</p>
+
+      <div class="cart-list">
+        @for (i of cartItems; track i.recipeId) {
+          <div class="cart-item">
+            <div class="cart-top">
+              <strong class="truncate">{{ i.recipeName }}</strong>
+              <span>{{ i.unitPrice | currency:'COP':'symbol':'1.0-0' }}</span>
+            </div>
+
+            <div class="cart-actions">
+              <input
+                class="quantity-input"
+                type="number"
+                [ngModel]="i.quantity"
+                (ngModelChange)="updateQty(i.recipeId, $event)"
+                min="1"
+              />
+
+              <button
+                class="btn btn-comment"
+                type="button"
+                (click)="openComment(i)"
+              >
+                💬 Comentario
+              </button>
+
+              <button
+                class="btn btn-danger"
+                type="button"
+                (click)="removeItem(i.recipeId)"
+              >
+                Eliminar
+              </button>
+            </div>
+
+            @if (i.recipeLineComment && i.recipeLineComment !== 'Sin observaciones') {
+              <span class="badge info">Con comentario</span>
+            }
+          </div>
+        }
+      </div>
+
+      <footer class="order-footer">
+        <div>
+          <p>Subtotal</p>
+          <strong>{{ total | currency:'COP':'symbol':'1.0-0' }}</strong>
+        </div>
+
+        <div>
+          <p>Total</p>
+          <strong>{{ total | currency:'COP':'symbol':'1.0-0' }}</strong>
+        </div>
+
+        <button
+          class="btn btn-primary"
+          type="button"
+          [disabled]="isCreatingSale || cartItems.length === 0"
+          (click)="completeSale()"
+        >
+          {{ isCreatingSale ? 'Procesando...' : 'Completar venta' }}
+        </button>
+      </footer>
+    </article>
+  </section>
+
+  <section class="surface sales-panel">
+    <h2>Ventas recientes</h2>
+
+    <div class="filters-card">
+      <div class="filters-grid sales-filters-grid">
+        <div class="filter-field">
+          <label class="filter-label">Buscar venta</label>
+          <input
+            class="filter-input"
+            [(ngModel)]="saleSearchTerm"
+            (ngModelChange)="applySaleFilters()"
+            placeholder="Ej: 8B5E51"
+          />
+        </div>
+
+        <div class="filter-field">
+          <label class="filter-label">Estado</label>
+          <select
+            class="filter-select"
+            [(ngModel)]="saleStatusFilter"
+            (ngModelChange)="applySaleFilters()"
+          >
+            <option value="ALL">Todas</option>
+            <option value="CREATED">Creada</option>
+            <option value="IN_PROGRESS">En proceso</option>
+            <option value="COMPLETED">Completada</option>
+            <option value="CANCELLED">Cancelada</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label class="filter-label">Desde</label>
+          <input
+            class="filter-input"
+            type="date"
+            [(ngModel)]="saleDateFrom"
+            (ngModelChange)="applySaleFilters()"
+          />
+        </div>
+
+        <div class="filter-field">
+          <label class="filter-label">Hasta</label>
+          <input
+            class="filter-input"
+            type="date"
+            [(ngModel)]="saleDateTo"
+            (ngModelChange)="applySaleFilters()"
+          />
+        </div>
+
+        <div class="filter-field">
+          <label class="filter-label">Total mínimo</label>
+          <input
+            class="filter-input"
+            type="number"
+            min="0"
+            [(ngModel)]="saleMinTotal"
+            (ngModelChange)="applySaleFilters()"
+          />
+        </div>
+
+        <div class="filter-field">
+          <label class="filter-label">Total máximo</label>
+          <input
+            class="filter-input"
+            type="number"
+            min="0"
+            [(ngModel)]="saleMaxTotal"
+            (ngModelChange)="applySaleFilters()"
+          />
+        </div>
+
+        <button
+          class="clear-filters-btn"
+          type="button"
+          (click)="clearSaleFilters()"
+        >
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+
+    <div class="sales-table-wrap">
+      <table class="sales-table">
+        <thead>
+          <tr>
+            <th>Venta</th>
+            <th>Estado</th>
+            <th>Total</th>
+            <th>Líneas</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (s of paginatedSales; track trackBySaleId($index, s)) {
+            <tr>
+              <td>Venta {{ saleLabel(s.id) }}</td>
+
+              <td>
+                <span
+                  class="badge"
+                  [class.info]="s.status === 'CREATED'"
+                  [class.warn]="s.status === 'IN_PROGRESS'"
+                  [class.ok]="s.status === 'COMPLETED'"
+                  [class.error]="s.status === 'CANCELLED'"
+                >
+                  {{ saleStatusLabel(s.status) }}
+                </span>
+              </td>
+
+              <td>{{ (s.totalAmount || 0) | currency:'COP':'symbol':'1.0-0' }}</td>
+
+              <td>
+                {{ s.details.length }}
+                {{ s.details.length === 1 ? 'línea' : 'líneas' }}
+              </td>
+
+              <td>{{ (s.createdDate || s.modifiedDate) | date:'dd/MM/yyyy HH:mm' }}</td>
+
+              <td>
+                <div class="actions compact">
+                  <button
+                    class="btn btn-soft"
+                    type="button"
+                    (click)="openTraceModal(s.id)"
+                  >
+                    Ver trazabilidad
+                  </button>
+
+                  <button
+                    class="btn btn-update"
+                    type="button"
+                    [disabled]="s.status === 'COMPLETED' || isUpdatingSaleId === s.id"
+                    (click)="openUpdateSaleModal(s)"
+                  >
+                    {{ isUpdatingSaleId === s.id ? 'Actualizando...' : 'Actualizar' }}
+                  </button>
+
+                  @if (s.status === 'CREATED') {
+                    <button
+                      class="btn btn-soft"
+                      type="button"
+                      (click)="changeStatus(s.id, 'IN_PROGRESS')"
+                    >
+                      En proceso
+                    </button>
+                  }
+
+                  @if (s.status === 'IN_PROGRESS') {
+                    <button
+                      class="btn btn-soft"
+                      type="button"
+                      (click)="changeStatus(s.id, 'COMPLETED')"
+                    >
+                      Completar
+                    </button>
+                  }
+
+                  <button
+                    class="btn btn-danger"
+                    type="button"
+                    [disabled]="s.status === 'COMPLETED'"
+                    (click)="askDelete(s.id)"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  No se encontraron ventas con esos filtros.
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sales-pagination">
+      <span class="muted">
+        Mostrando {{ salesRangeStart }}-{{ salesRangeEnd }} de {{ filteredSales.length }}
+      </span>
+
+      <div class="pager-controls">
+        <label>
+          Tamaño
+          <select
+            class="input page-size"
+            [ngModel]="salesPageSize"
+            (ngModelChange)="changeSalesPageSize($event)"
+          >
+            @for (size of salesPageSizeOptions; track size) {
+              <option [ngValue]="size">{{ size }}</option>
+            }
+          </select>
+        </label>
+
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="prevSalesPage()"
+          [disabled]="salesPage <= 1"
+        >
+          Anterior
+        </button>
+
+        <span>Página {{ salesPage }} de {{ totalSalesPages }}</span>
+
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="nextSalesPage()"
+          [disabled]="salesPage >= totalSalesPages"
+        >
+          Siguiente
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+@if (showCommentModal) {
+  <div class="modal">
+    <div class="modal-card">
+      <button
+        class="x"
+        type="button"
+        (click)="showCommentModal = false"
+      >
+        ✕
+      </button>
+
+      <h3>Comentario para {{ commentRecipeName() }}</h3>
+      <p class="muted">Agrega una observación específica para cocina.</p>
+
+      <textarea
+        class="input"
+        [(ngModel)]="modalComment"
+        placeholder="Ej: Sin cebolla, término medio..."
+      ></textarea>
+
+      <div class="modal-actions">
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="showCommentModal = false"
+        >
+          Cancelar
+        </button>
+
+        <button
+          class="btn btn-primary"
+          type="button"
+          (click)="saveComment()"
+        >
+          Guardar comentario
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showSellerModal) {
+  <div class="modal">
+    <div class="modal-card">
+      <button
+        class="x"
+        type="button"
+        (click)="showSellerModal = false"
+      >
+        ✕
+      </button>
+
+      <h3>Seleccionar vendedor</h3>
+
+      <input
+        class="input"
+        [(ngModel)]="sellerQuery"
+        placeholder="Buscar por nombre o documento"
+      />
+
+      <div class="pick-list">
+        @for (s of filteredSellers; track s.id) {
+          <button
+            class="pick"
+            type="button"
+            (click)="pickSeller(s)"
+          >
+            <span>{{ sellerDisplayName(s) }}</span>
+            <small>{{ sellerDocument(s) }}</small>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+@if (showTableModal) {
+  <div class="modal">
+    <div class="modal-card">
+      <button
+        class="x"
+        type="button"
+        (click)="showTableModal = false"
+      >
+        ✕
+      </button>
+
+      <h3>Seleccionar mesa</h3>
+
+      <input
+        class="input"
+        [(ngModel)]="tableQuery"
+        placeholder="Buscar mesa"
+      />
+
+      <div class="pick-list">
+        @for (t of filteredTables; track t.id) {
+          <button
+            class="pick"
+            type="button"
+            [disabled]="!tableAvailable(t)"
+            (click)="pickTable(t)"
+          >
+            <span>{{ tableDisplayName(t) }}</span>
+            <small
+              class="badge"
+              [class.ok]="tableAvailable(t)"
+              [class.error]="!tableAvailable(t)"
+            >
+              {{ tableAvailable(t) ? 'Disponible' : 'No disponible' }}
+            </small>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+@if (showDeleteModal) {
+  <div class="modal">
+    <div class="modal-card">
+      <h3>¿Eliminar venta?</h3>
+      <p class="muted">Esta acción se enviará a procesamiento asíncrono.</p>
+
+      <div class="modal-actions">
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="showDeleteModal = false"
+        >
+          Cancelar
+        </button>
+
+        <button
+          class="btn btn-danger"
+          type="button"
+          (click)="deleteSale()"
+        >
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showTraceModal) {
+  <div class="modal">
+    <div class="modal-card trace-modal">
+      <button
+        class="x"
+        type="button"
+        (click)="closeTraceModal()"
+      >
+        ✕
+      </button>
+
+      <h3>Trazabilidad de la venta {{ activeTraceSaleLabel() }}</h3>
+      <p class="muted">Consulta el resultado del procesamiento de inventario por receta.</p>
+
+      @if (traceLoading) {
+        <p class="muted">Cargando trazabilidad...</p>
+      } @else if (!activeTraceItems().length) {
+        <p class="muted">No hay trazabilidad registrada para esta venta.</p>
+      } @else {
+        <div class="trace-list">
+          @for (t of activeTraceItems(); track t.id) {
+            <article class="trace-item">
+              <div class="trace-item-head">
+                <strong>{{ traceRecipeName(t) }}</strong>
+
+                <span
+                  class="badge"
+                  [class.ok]="t.status === 'ACCEPTED'"
+                  [class.error]="t.status === 'REJECTED'"
+                >
+                  {{ traceStatusLabel(t.status) }}
+                </span>
+              </div>
+
+              <p class="muted">{{ t.observation || 'Sin observación' }}</p>
+
+              @if (t.createdDate) {
+                <small class="muted">{{ t.createdDate | date:'dd/MM/yyyy HH:mm' }}</small>
+              }
+            </article>
+          }
+        </div>
+      }
+
+      <div class="modal-actions">
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="closeTraceModal()"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showUpdateModal && selectedSaleToUpdate && updateDraft) {
+  <div class="modal">
+    <div class="modal-card update-sale-modal">
+      <button
+        class="x"
+        type="button"
+        (click)="closeUpdateSaleModal()"
+      >
+        ✕
+      </button>
+
+      <h3>Actualizar venta {{ saleLabel(selectedSaleToUpdate.id) }}</h3>
+      <p class="muted">
+        Modifica los datos de la venta y envía la actualización a procesamiento.
+      </p>
+
+      <div class="update-meta-grid">
+        <div class="meta-item">
+          <span class="meta-label">Vendedor:</span>
+          <strong class="meta-value">{{ updateDraft.sellerName }}</strong>
+        </div>
+
+        <div class="meta-item">
+          <span class="meta-label">Mesa:</span>
+          <strong class="meta-value">{{ updateDraft.tableName }}</strong>
+        </div>
+      </div>
+
+      <div class="trace-list">
+        @for (item of updateDraft.details; track item.recipeId) {
+          <article class="trace-item update-line">
+            <div class="trace-item-head">
+              <strong>{{ item.recipeName }}</strong>
+
+              <button
+                class="btn btn-danger"
+                type="button"
+                (click)="removeUpdateDraftItem(item.recipeId)"
+              >
+                Quitar
+              </button>
+            </div>
+
+            <div class="update-line-grid">
+              <label class="filter-field">
+                <span class="filter-label">Cantidad</span>
+                <input
+                  class="input"
+                  type="number"
+                  min="1"
+                  [ngModel]="item.quantity"
+                  (ngModelChange)="updateDraftQty(item.recipeId, $event)"
+                />
+              </label>
+
+              <label class="filter-field">
+                <span class="filter-label">Precio unitario</span>
+                <input
+                  class="input"
+                  type="number"
+                  min="0"
+                  [ngModel]="item.unitPrice"
+                  (ngModelChange)="updateDraftUnitPrice(item.recipeId, $event)"
+                />
+              </label>
+            </div>
+
+            <label class="filter-field">
+              <span class="filter-label">Comentario</span>
+              <textarea
+                class="input"
+                [ngModel]="item.recipeLineComment"
+                (ngModelChange)="updateDraftComment(item.recipeId, $event)"
+              ></textarea>
+            </label>
+          </article>
+        } @empty {
+          <div class="empty-state">
+            La venta debe tener al menos una receta.
+          </div>
+        }
+      </div>
+
+      <div class="update-total">
+        <span>Total:</span>
+        <strong>{{ updateDraftTotal() | currency:'COP':'symbol':'1.0-0' }}</strong>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="closeUpdateSaleModal()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          class="btn btn-primary"
+          type="button"
+          [disabled]="isUpdatingSaleId === selectedSaleToUpdate.id"
+          (click)="submitSaleUpdate()"
+        >
+          {{ isUpdatingSaleId === selectedSaleToUpdate.id ? 'Guardando...' : 'Guardar actualización' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<div class="toasts-wrap">
+  @for (toast of toasts; track trackByToastId($index, toast)) {
+    <div
+      class="toast"
+      [class.success]="toast.type === 'success'"
+      [class.error]="toast.type === 'error'"
+    >
+      <button
+        class="x toast-close"
+        type="button"
+        (click)="removeToast(toast.id)"
+      >
+        ✕
+      </button>
+
+      <p>{{ toast.message }}</p>
+      <div
+        class="progress"
+        [style.animation-duration.ms]="toast.duration"
+      ></div>
+    </div>
+  }
+</div>

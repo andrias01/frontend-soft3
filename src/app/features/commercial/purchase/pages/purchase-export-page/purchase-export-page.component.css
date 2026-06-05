@@ -1,0 +1,15 @@
+.purchase-page { background:#fff8f2; min-height:100%; padding:24px; }
+.page-header { margin-bottom:16px; }
+.page-header h1 { margin:8px 0 6px; }
+.page-header p { color:#6b7280; margin:0; }
+.btn-link { background:none; border:0; color:#ff6b35; cursor:pointer; font-weight:700; padding:0; }
+.card { background:#fff; border:1px solid #eadfd4; border-radius:12px; box-shadow:0 8px 24px rgba(15,23,42,.08); padding:16px; }
+.section-title { font-weight:800; margin-bottom:12px; }
+.filters-grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); }
+.field { display:grid; gap:6px; }
+label { color:#5a524b; font-size:13px; font-weight:700; }
+select,input { border:1px solid #d9d4cd; border-radius:8px; min-height:40px; padding:0 10px; }
+.alert-warning { background:#ffedd5; border-radius:8px; color:#7c2d12; margin-top:12px; padding:10px; }
+.form-actions { display:flex; justify-content:flex-end; margin-top:14px; }
+.btn-primary { background:#ff6b35; border:0; border-radius:8px; color:#fff; cursor:pointer; font-weight:700; min-height:36px; padding:0 14px; }
+.btn-primary:disabled { background:#f9ba9a; cursor:not-allowed; }

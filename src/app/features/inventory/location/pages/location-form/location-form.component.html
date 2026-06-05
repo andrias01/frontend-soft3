@@ -1,0 +1,127 @@
+<div class="location-form-page">
+  <header class="page-header form-hero">
+    <div class="hero-copy">
+      <span class="hero-badge">
+        {{ isEditMode() ? 'Actualización' : 'Registro' }}
+      </span>
+
+      <h1>{{ isEditMode() ? 'Editar sede' : 'Nueva sede' }}</h1>
+
+      <p>
+        Completa la información operativa de la sede para mantener actualizado el inventario.
+      </p>
+    </div>
+
+    <button type="button" class="btn-back" (click)="goBack()">
+      <span class="back-icon">←</span>
+      <span>Volver</span>
+    </button>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">{{ errorMessage() }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="card location-form">
+    <section class="form-section">
+      <div class="form-section-title">
+        <span>Información general</span>
+        <p>Datos principales para identificar la sede.</p>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Nombre</label>
+          <input formControlName="name" placeholder="Ej: Sede Laureles" />
+          <small class="field-error" [class.visible]="!!getFieldError('name')">
+            {{ getFieldError('name') || ' ' }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Ciudad</label>
+          <input formControlName="city" placeholder="Ej: Medellín" />
+          <small class="field-error" [class.visible]="!!getFieldError('city')">
+            {{ getFieldError('city') || ' ' }}
+          </small>
+        </div>
+
+        <div class="form-field full">
+          <label>Dirección</label>
+          <input formControlName="address" placeholder="Ej: Carrera 70 # 45-21" />
+          <small class="field-error" [class.visible]="!!getFieldError('address')">
+            {{ getFieldError('address') || ' ' }}
+          </small>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="form-section-title">
+        <span>Contacto</span>
+        <p>Información para comunicación y soporte operativo.</p>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Email</label>
+          <input formControlName="email" type="email" placeholder="Ej: laureles@eatup.com" />
+          <small class="field-error" [class.visible]="!!getFieldError('email')">
+            {{ getFieldError('email') || ' ' }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Teléfono</label>
+          <input formControlName="phoneNumber" placeholder="Ej: +573005551111" />
+          <small class="field-error" [class.visible]="!!getFieldError('phoneNumber')">
+            {{ getFieldError('phoneNumber') || ' ' }}
+          </small>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="form-section-title">
+        <span>Horario de atención</span>
+        <p>Define la disponibilidad operativa de la sede.</p>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Hora de apertura</label>
+          <input formControlName="startTime" type="time" />
+          <small class="field-error" [class.visible]="!!getFieldError('startTime')">
+            {{ getFieldError('startTime') || ' ' }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label>Hora de cierre</label>
+          <input formControlName="endTime" type="time" />
+          <small class="field-error" [class.visible]="!!getFieldError('endTime')">
+            {{ getFieldError('endTime') || ' ' }}
+          </small>
+        </div>
+
+        <div class="form-field full">
+          <label class="status-card">
+            <input formControlName="active" type="checkbox" />
+            <div class="status-content">
+              <span>Sede activa</span>
+              <p>Esta sede estará disponible para operaciones de inventario.</p>
+            </div>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <button type="button" class="btn-ghost" (click)="goBack()">Cancelar</button>
+
+      <button type="submit" class="btn-primary" [disabled]="saving()">
+        {{ saving() ? 'Guardando...' : 'Guardar Sede' }}
+      </button>
+    </div>
+  </form>
+</div>

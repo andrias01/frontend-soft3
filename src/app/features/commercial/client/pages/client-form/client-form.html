@@ -1,0 +1,183 @@
+<section class="client-form-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Commercial</p>
+      <h1>{{ isEditing() ? 'Editar cliente' : 'Nuevo cliente' }}</h1>
+      <p class="subtitle">Completa la informacion comercial y de contacto del cliente.</p>
+    </div>
+
+    <a class="secondary-action" routerLink="/commercial/clients">Volver</a>
+  </header>
+
+  @if (pageLoading()) {
+    <div class="state">Cargando formulario...</div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="save()" class="form-shell">
+      @if (generalError()) {
+        <div class="alert">{{ generalError() }}</div>
+      }
+
+      @if (successMessage()) {
+        <div class="success">{{ successMessage() }}</div>
+      }
+
+      @if (catalogError()) {
+        <div class="alert">{{ catalogError() }}</div>
+      }
+
+      <div class="section-title">Datos personales</div>
+
+      <div class="form-grid">
+        <label>
+          <span>Primer nombre</span>
+          <input type="text" formControlName="firstName" autocomplete="given-name" />
+          @if (showFieldError('firstName')) {
+            <small>{{ fieldError('firstName') }}</small>
+          }
+        </label>
+
+        <label>
+          <span>Segundo nombre</span>
+          <input type="text" formControlName="secondName" autocomplete="additional-name" />
+          @if (showFieldError('secondName')) {
+            <small>{{ fieldError('secondName') }}</small>
+          }
+        </label>
+
+        <label>
+          <span>Primer apellido</span>
+          <input type="text" formControlName="firstLastName" />
+          @if (showFieldError('firstLastName')) {
+            <small>{{ fieldError('firstLastName') }}</small>
+          }
+        </label>
+
+        <label>
+          <span>Segundo apellido</span>
+          <input type="text" formControlName="secondLastName" />
+          @if (showFieldError('secondLastName')) {
+            <small>{{ fieldError('secondLastName') }}</small>
+          }
+        </label>
+      </div>
+
+      <div class="section-title">Identificacion y contacto</div>
+
+      <div class="form-grid">
+        <label>
+          <span>Tipo de documento</span>
+          <select formControlName="documentTypeId" [disabled]="catalogsLoading()">
+            <option value="">Selecciona un tipo de documento</option>
+            @for (type of documentTypes(); track type.id) {
+              <option [value]="type.id">
+                {{ type.shortLabel ? type.shortLabel + ' - ' + type.label : type.label }}
+              </option>
+            }
+          </select>
+          @if (showFieldError('documentTypeId')) {
+            <small>{{ fieldError('documentTypeId') }}</small>
+          }
+        </label>
+
+        <label>
+          <span>Numero de documento</span>
+          <input type="text" formControlName="documentNumber" />
+          @if (showFieldError('documentNumber')) {
+            <small>{{ fieldError('documentNumber') }}</small>
+          }
+        </label>
+
+        <label>
+          <span>Email</span>
+          <input type="email" formControlName="email" />
+          @if (showFieldError('email')) {
+            <small>{{ fieldError('email') }}</small>
+          }
+        </label>
+
+        <label>
+          <span>Telefono</span>
+          <input type="tel" formControlName="phone" (keypress)="onlyDigits($event)" />
+          @if (showFieldError('phone')) {
+            <small>{{ fieldError('phone') }}</small>
+          }
+        </label>
+      </div>
+
+      <div class="section-title">Ubicacion y condiciones comerciales</div>
+
+      <div class="form-grid">
+        <label>
+          <span>Departamento</span>
+          <select formControlName="departmentId" [disabled]="catalogsLoading()">
+            <option value="">Selecciona un departamento</option>
+            @for (department of departments(); track department.id) {
+              <option [value]="department.id">{{ department.label }}</option>
+            }
+          </select>
+          @if (showFieldError('departmentId')) {
+            <small>{{ fieldError('departmentId') }}</small>
+          }
+        </label>
+
+        <label>
+          <span>Ciudad</span>
+          <select
+            formControlName="cityId"
+            [disabled]="!form.controls.departmentId.value || citiesLoading()"
+          >
+            <option value="">
+              {{ citiesLoading() ? 'Cargando ciudades...' : 'Selecciona una ciudad' }}
+            </option>
+            @for (city of cities(); track city.id) {
+              <option [value]="city.id">{{ city.label }}</option>
+            }
+          </select>
+          @if (showFieldError('cityId')) {
+            <small>{{ fieldError('cityId') }}</small>
+          }
+        </label>
+
+        <label>
+          <span>Regimen tributario</span>
+          <select formControlName="taxRegimeId">
+            @for (regime of taxRegimes; track regime.id) {
+              <option [value]="regime.id">{{ regime.label }}</option>
+            }
+          </select>
+          @if (showFieldError('taxRegimeId')) {
+            <small>{{ fieldError('taxRegimeId') }}</small>
+          }
+        </label>
+
+        <label>
+          <span>Vendedor asignado</span>
+          <input type="number" min="1" formControlName="assignedSellerId" />
+          @if (showFieldError('assignedSellerId')) {
+            <small>{{ fieldError('assignedSellerId') }}</small>
+          }
+        </label>
+
+        <label class="wide">
+          <span>Direccion</span>
+          <input type="text" formControlName="address" />
+          @if (showFieldError('address')) {
+            <small>{{ fieldError('address') }}</small>
+          }
+        </label>
+
+        <label class="toggle">
+          <input type="checkbox" formControlName="applyDiscounts" />
+          <span>Aplica descuentos</span>
+        </label>
+      </div>
+
+      <footer class="form-actions">
+        <a routerLink="/commercial/clients">Cancelar</a>
+        <button type="submit" [disabled]="submitting()">
+          {{ submitting() ? 'Enviando...' : isEditing() ? 'Guardar cambios' : 'Crear cliente' }}
+        </button>
+      </footer>
+    </form>
+  }
+</section>
