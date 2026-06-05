@@ -3,6 +3,36 @@
   publish = "dist/eatup-frontend/browser"
 
 [[redirects]]
+  from = "/api/*"
+  to = "https://apigatewaysoft3-production.up.railway.app/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/userapi/*"
+  to = "https://apigatewaysoft3-production.up.railway.app/userapi/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/comercialapi/*"
+  to = "https://apigatewaysoft3-production.up.railway.app/comercialapi/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/commercial/api/*"
+  to = "https://apigatewaysoft3-production.up.railway.app/commercial/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/inventory/api/*"
+  to = "https://apigatewaysoft3-production.up.railway.app/inventory/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
