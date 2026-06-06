@@ -20,7 +20,7 @@ export interface ProductPage {
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private readonly apiRoot = ENV.apiUrl.replace(/\/api\/v1\/?$/, '');
-  private readonly url = `${this.apiRoot}/inventory/api/v1/product`;
+  private readonly url = `${this.apiRoot}/inventory/api/v1/products`;
 
   constructor(private http: HttpClient) {}
 

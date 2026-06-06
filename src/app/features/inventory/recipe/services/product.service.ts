@@ -16,7 +16,7 @@ interface ProductPage {
 @Injectable({ providedIn: 'root' })
 export class RecipeProductService {
   private readonly apiRoot = ENV.apiUrl.replace(/\/api\/v1\/?$/, '');
-  private readonly url = `${this.apiRoot}/inventory/api/v1/product`;
+  private readonly url = `${this.apiRoot}/inventory/api/v1/products`;
 
   constructor(private http: HttpClient) {}
 
