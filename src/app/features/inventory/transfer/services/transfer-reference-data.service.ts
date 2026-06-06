@@ -50,7 +50,7 @@ export class TransferReferenceDataService {
     for (let page = 0; page < 30; page++) {
       const response = await firstValueFrom(
         this.http.get<PageResponse<ProductResponse>>(
-          `${this.inventoryApiRoot}/inventory/product/location/${locationId}`,
+          `${this.inventoryApiRoot}/inventory/api/v1/products/location/${locationId}`,
           { params: { page: String(page), size: String(pageSize) } }
         )
       );
